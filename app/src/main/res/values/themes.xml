@@ -1,9 +1,58 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.NUMAD25SP_Group4" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base application theme -->
+    <style name="Theme.MindfulJot" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Primary brand color -->
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryVariant">@color/primary_dark</item>
+        <item name="colorOnPrimary">@color/white</item>
+
+        <!-- Secondary brand color -->
+        <item name="colorSecondary">@color/accent</item>
+        <item name="colorSecondaryVariant">@color/accent</item>
+        <item name="colorOnSecondary">@color/white</item>
+
+        <!-- Status bar color -->
+        <item name="android:statusBarColor">@color/background_dark</item>
+
+        <!-- Background colors -->
+        <item name="android:windowBackground">@color/background_dark</item>
+
+        <!-- Text colors -->
+        <item name="android:textColorPrimary">@color/white</item>
+
+        <!-- Custom attributes -->
+        <item name="bottomNavigationStyle">@style/Widget.MindfulJot.BottomNavigation</item>
+        <item name="cardViewStyle">@style/Widget.MindfulJot.CardView</item>
     </style>
 
-    <style name="Theme.NUMAD25SP_Group4" parent="Base.Theme.NUMAD25SP_Group4" />
+    <!-- Custom styles -->
+    <style name="Widget.MindfulJot.BottomNavigation" parent="Widget.MaterialComponents.BottomNavigationView">
+        <item name="itemIconTint">@color/bottom_nav_selector</item>
+        <item name="itemTextColor">@color/bottom_nav_selector</item>
+        <item name="backgroundTint">@color/navigation_background</item>
+    </style>
+
+    <style name="Widget.MindfulJot.CardView" parent="Widget.MaterialComponents.CardView">
+        <item name="cardBackgroundColor">@color/card_background</item>
+        <item name="cardCornerRadius">12dp</item>
+        <item name="cardElevation">4dp</item>
+    </style>
+
+    <!-- Text styles -->
+    <style name="TextAppearance.MindfulJot.Heading" parent="TextAppearance.MaterialComponents.Headline4">
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textSize">32sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="TextAppearance.MindfulJot.Subheading" parent="TextAppearance.MaterialComponents.Headline6">
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textSize">18sp</item>
+    </style>
+
+    <style name="TextAppearance.MindfulJot.Body" parent="TextAppearance.MaterialComponents.Body1">
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textSize">16sp</item>
+    </style>
 </resources>
