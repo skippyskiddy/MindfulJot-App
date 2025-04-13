@@ -33,10 +33,10 @@
         <activity android:name=".SignupActivity" />
 
         <!-- Onboarding Activities -->
-<!--        <activity android:name=".onboarding.WelcomeActivity" />-->
-<!--        <activity android:name=".onboarding.GoalsActivity" />-->
-<!--        <activity android:name=".onboarding.NotificationsActivity" />-->
-<!--        <activity android:name=".onboarding.TutorialActivity" />-->
+        <activity android:name=".WelcomeActivity" />
+        <activity android:name=".GoalsActivity" />
+        <activity android:name=".NotificationsActivity" />
+<!--        <activity android:name=".TutorialActivity" />-->
 
         <!-- Main Activities -->
         <activity android:name=".HomeActivity" />

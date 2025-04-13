@@ -7,7 +7,6 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Patterns;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -195,7 +194,7 @@ public class SignupActivity extends AppCompatActivity {
             focusView = etPassword;
             cancel = true;
         } else if (!isPasswordValid(password)) {
-            etPassword.setError("Password must contain at least one capital letter and one number");
+            etPassword.setError("Password must be 6 characters long and contain at least one capital letter and one number");
             focusView = etPassword;
             cancel = true;
         }
@@ -253,7 +252,7 @@ public class SignupActivity extends AppCompatActivity {
                     loginManager.saveLoginState(SignupActivity.this, name);
 
                     // Navigate to onboarding/tutorial
-                    //TODO navigateToWelcome();
+                    navigateToWelcome();
                 } else {
                     // If sign up fails, display a message to the user
                     String errorMessage = task.getException() != null ?
@@ -273,14 +272,13 @@ public class SignupActivity extends AppCompatActivity {
 
     /**
      * Navigate to the welcome/onboarding screen
-     * TODO
      */
-//    private void navigateToWelcome() {
-//        Intent intent = new Intent(SignupActivity.this, WelcomeActivity.class);
-//        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-//        startActivity(intent);
-//        finish();
-//    }
+    private void navigateToWelcome() {
+        Intent intent = new Intent(SignupActivity.this, WelcomeActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
+    }
 
     /**
      * Validation helper methods
