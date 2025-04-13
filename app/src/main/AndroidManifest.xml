@@ -29,25 +29,25 @@
         </activity>
 
         <!-- Login and Signup Activities -->
-        <activity android:name=".LoginActivity" />
-        <activity android:name=".SignupActivity" />
+<!--        <activity android:name=".LoginActivity" />-->
+<!--        <activity android:name=".SignupActivity" />-->
 
         <!-- Onboarding Activities -->
-        <activity android:name=".onboarding.WelcomeActivity" />
-        <activity android:name=".onboarding.GoalsActivity" />
-        <activity android:name=".onboarding.NotificationsActivity" />
-        <activity android:name=".onboarding.TutorialActivity" />
+<!--        <activity android:name=".onboarding.WelcomeActivity" />-->
+<!--        <activity android:name=".onboarding.GoalsActivity" />-->
+<!--        <activity android:name=".onboarding.NotificationsActivity" />-->
+<!--        <activity android:name=".onboarding.TutorialActivity" />-->
 
         <!-- Main Activities -->
         <activity android:name=".HomeActivity" />
-        <activity android:name=".PrimaryEmotionActivity" />
-        <activity android:name=".SpecificEmotionActivity" />
-        <activity android:name=".JournalSummaryActivity" />
-        <activity android:name=".AnalyticsActivity" />
-        <activity android:name=".EntriesActivity" />
-        <activity android:name=".EntryListActivity" />
-        <activity android:name=".EntryEditActivity" />
-        <activity android:name=".SettingsActivity" />
+<!--        <activity android:name=".PrimaryEmotionActivity" />-->
+<!--        <activity android:name=".SpecificEmotionActivity" />-->
+<!--        <activity android:name=".JournalSummaryActivity" />-->
+<!--        <activity android:name=".AnalyticsActivity" />-->
+<!--        <activity android:name=".EntriesActivity" />-->
+<!--        <activity android:name=".EntryListActivity" />-->
+<!--        <activity android:name=".EntryEditActivity" />-->
+<!--        <activity android:name=".SettingsActivity" />-->
     </application>
 
 </manifest>

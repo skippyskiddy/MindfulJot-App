@@ -1,14 +1,11 @@
 <resources>
-    <string name="app_name">NUMAD25SP_Group4</string>
-    <string name="group_4">Group 4</string>
-    <string name="at_your_service">At Your Service</string>
-    <string name="https_jsonplaceholder_typicode_com_posts_1">https://jsonplaceholder.typicode.com/posts/1</string>
-    <string name="ping_web_service">Ping Web Service</string>
-    <string name="enter_city_name">Enter City Name</string>
-    <string name="get_weather">Get Weather</string>
-    <string name="error_fetching_weather_data">Error fetching weather data.</string>
-    <string name="weather_icon">Weather Icon</string>
-    <string name="about">About</string>
-    <string name="members">Members: Elif Tirkes, Joseph Mathew</string>
-    <string name="stick_it_to_em">Stick It To Em</string>
+    <string name="app_name">MindfulJot</string>
+    <string name="app_tagline">\"Understand yourself, one emotion at a time\"</string>
+    <string name="login">LOG IN</string>
+    <string name="create_account">CREATE ACCOUNT</string>
+    <string name="how_are_you_feeling">How are you feeling?</string>
+    <string name="no_entries">No entries - log how you feel with the check in button</string>
+    <string name="last_check_in">You last checked in on %1$s. Your last logged emotion was %2$s</string>
+    <string name="last_check_in_multiple">You last checked in on %1$s. Your last logged emotions were %2$s and %3$s</string>
 </resources>
+
