@@ -54,16 +54,14 @@ public class SplashActivity extends AppCompatActivity {
 
         // Set up click listeners
         btnLogin.setOnClickListener(view -> {
-            //  navigate directly to HomeActivity
-            // In a real implementation, this would go to LoginActivity
-            Intent intent = new Intent(SplashActivity.this, HomeActivity.class);
+            // Navigate to the LoginActivity
+            Intent intent = new Intent(SplashActivity.this, LoginActivity.class);
             startActivity(intent);
         });
 
         btnCreateAccount.setOnClickListener(view -> {
-            // TODO right now navigate directly to HomeActivity
-            // In a real implementation, this would go to SignupActivity
-            Intent intent = new Intent(SplashActivity.this, HomeActivity.class);
+            // Navigate to the SignupActivity
+            Intent intent = new Intent(SplashActivity.this, SignupActivity.class);
             startActivity(intent);
         });
 

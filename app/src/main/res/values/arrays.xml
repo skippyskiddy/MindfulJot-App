@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="age_ranges">
+        <item>Select your age range</item>
+        <item>Under 18</item>
+        <item>18-24</item>
+        <item>25-34</item>
+        <item>35-44</item>
+        <item>45-54</item>
+        <item>55-64</item>
+        <item>65+</item>
+        <item>Prefer not to say</item>
+    </string-array>
+</resources>

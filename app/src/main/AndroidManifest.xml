@@ -29,8 +29,8 @@
         </activity>
 
         <!-- Login and Signup Activities -->
-<!--        <activity android:name=".LoginActivity" />-->
-<!--        <activity android:name=".SignupActivity" />-->
+        <activity android:name=".LoginActivity" />
+        <activity android:name=".SignupActivity" />
 
         <!-- Onboarding Activities -->
 <!--        <activity android:name=".onboarding.WelcomeActivity" />-->
