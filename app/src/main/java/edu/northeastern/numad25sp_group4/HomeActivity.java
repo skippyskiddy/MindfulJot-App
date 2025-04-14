@@ -16,6 +16,7 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -75,9 +76,26 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationV
     private void setupListeners() {
         // Set up card click listener for emotion entry
         cardAddEntry.setOnClickListener(v -> {
-            // Navigate to primary emotion selection screen
-            Intent intent = new Intent(HomeActivity.this, PrimaryEmotionActivity.class);
-            startActivity(intent);
+            // Add a small animation to the card when clicked
+            v.animate()
+                    .scaleX(0.95f)
+                    .scaleY(0.95f)
+                    .setDuration(100)
+                    .withEndAction(() -> {
+                        // Return to original size
+                        v.animate()
+                                .scaleX(1f)
+                                .scaleY(1f)
+                                .setDuration(100)
+                                .withEndAction(() -> {
+                                    // Navigate to primary emotion selection screen
+                                    Intent intent = new Intent(HomeActivity.this, PrimaryEmotionActivity.class);
+                                    startActivity(intent);
+                                    // Apply custom transition animation
+                                    overridePendingTransition(R.anim.anim_slide_in_right, R.anim.anim_slide_out_left);
+                                });
+                    })
+                    .start();
         });
 
         // Set up bottom navigation listener
