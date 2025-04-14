@@ -46,38 +46,45 @@ public class PrimaryEmotionActivity extends AppCompatActivity {
         cardLowEnergyPleasant = findViewById(R.id.card_low_energy_pleasant);
         cardLowEnergyUnpleasant = findViewById(R.id.card_low_energy_unpleasant);
 
-        // Apply animations to cards when activity starts
-        Animation bounceAnimation = AnimationUtils.loadAnimation(this, R.anim.anim_bounce);
+        // Use a different animation for initial display
+        Animation initialBounceAnimation = AnimationUtils.loadAnimation(this, R.anim.anim_bounce_initial);
+
+        // Clear any existing animations first
+        cardHighEnergyUnpleasant.clearAnimation();
+        cardHighEnergyPleasant.clearAnimation();
+        cardLowEnergyUnpleasant.clearAnimation();
+        cardLowEnergyPleasant.clearAnimation();
 
         // Apply animations with slight delays for a staggered effect
-        cardHighEnergyUnpleasant.startAnimation(bounceAnimation);
+        cardHighEnergyUnpleasant.startAnimation(initialBounceAnimation);
 
         cardHighEnergyPleasant.postDelayed(() -> {
-            cardHighEnergyPleasant.startAnimation(bounceAnimation);
+            Animation animation = AnimationUtils.loadAnimation(this, R.anim.anim_bounce_initial);
+            cardHighEnergyPleasant.startAnimation(animation);
         }, 100);
 
         cardLowEnergyUnpleasant.postDelayed(() -> {
-            cardLowEnergyUnpleasant.startAnimation(bounceAnimation);
+            Animation animation = AnimationUtils.loadAnimation(this, R.anim.anim_bounce_initial);
+            cardLowEnergyUnpleasant.startAnimation(animation);
         }, 200);
 
         cardLowEnergyPleasant.postDelayed(() -> {
-            cardLowEnergyPleasant.startAnimation(bounceAnimation);
+            Animation animation = AnimationUtils.loadAnimation(this, R.anim.anim_bounce_initial);
+            cardLowEnergyPleasant.startAnimation(animation);
         }, 300);
     }
 
     private void setupListeners() {
         // Back button click listener
         btnBack.setOnClickListener(v -> {
-            finish(); // Return to previous screen
-            overridePendingTransition(R.anim.anim_slide_in_right, R.anim.anim_slide_out_left);
+            // Simply finish the activity to go back to HomeActivity
+            finish();
+            overridePendingTransition(R.anim.anim_slide_in_left, R.anim.anim_slide_out_right);
         });
-
-        // Animation for card touch
-        Animation bounceAnim = AnimationUtils.loadAnimation(this, R.anim.anim_bounce);
 
         // High Energy Pleasant quadrant click listener
         cardHighEnergyPleasant.setOnClickListener(v -> {
-            v.startAnimation(bounceAnim);
+            Animation bounceAnim = AnimationUtils.loadAnimation(this, R.anim.anim_bounce);
             bounceAnim.setAnimationListener(new Animation.AnimationListener() {
                 @Override
                 public void onAnimationStart(Animation animation) {}
@@ -90,11 +97,12 @@ public class PrimaryEmotionActivity extends AppCompatActivity {
                 @Override
                 public void onAnimationRepeat(Animation animation) {}
             });
+            v.startAnimation(bounceAnim);
         });
 
         // High Energy Unpleasant quadrant click listener
         cardHighEnergyUnpleasant.setOnClickListener(v -> {
-            v.startAnimation(bounceAnim);
+            Animation bounceAnim = AnimationUtils.loadAnimation(this, R.anim.anim_bounce);
             bounceAnim.setAnimationListener(new Animation.AnimationListener() {
                 @Override
                 public void onAnimationStart(Animation animation) {}
@@ -107,11 +115,12 @@ public class PrimaryEmotionActivity extends AppCompatActivity {
                 @Override
                 public void onAnimationRepeat(Animation animation) {}
             });
+            v.startAnimation(bounceAnim);
         });
 
         // Low Energy Pleasant quadrant click listener
         cardLowEnergyPleasant.setOnClickListener(v -> {
-            v.startAnimation(bounceAnim);
+            Animation bounceAnim = AnimationUtils.loadAnimation(this, R.anim.anim_bounce);
             bounceAnim.setAnimationListener(new Animation.AnimationListener() {
                 @Override
                 public void onAnimationStart(Animation animation) {}
@@ -124,11 +133,12 @@ public class PrimaryEmotionActivity extends AppCompatActivity {
                 @Override
                 public void onAnimationRepeat(Animation animation) {}
             });
+            v.startAnimation(bounceAnim);
         });
 
         // Low Energy Unpleasant quadrant click listener
         cardLowEnergyUnpleasant.setOnClickListener(v -> {
-            v.startAnimation(bounceAnim);
+            Animation bounceAnim = AnimationUtils.loadAnimation(this, R.anim.anim_bounce);
             bounceAnim.setAnimationListener(new Animation.AnimationListener() {
                 @Override
                 public void onAnimationStart(Animation animation) {}
@@ -141,6 +151,7 @@ public class PrimaryEmotionActivity extends AppCompatActivity {
                 @Override
                 public void onAnimationRepeat(Animation animation) {}
             });
+            v.startAnimation(bounceAnim);
         });
     }
 
@@ -148,16 +159,12 @@ public class PrimaryEmotionActivity extends AppCompatActivity {
      * Navigate to specific emotions screen with the selected category
      */
     private void navigateToSpecificEmotions(Emotion.Category category) {
-        // TODO: Create SpecificEmotionActivity and navigate to it
-        // For now, we'll just return to HomeActivity
-        // Intent intent = new Intent(PrimaryEmotionActivity.this, SpecificEmotionActivity.class);
-        // intent.putExtra("CATEGORY", category.name());
-        // startActivity(intent);
-        // overridePendingTransition(R.anim.anim_slide_in_right, R.anim.anim_slide_out_left);
-
-        // Return to home for now with transition animation
-        finish();
+        // Navigate to SpecificEmotionActivity with selected category
+        Intent intent = new Intent(PrimaryEmotionActivity.this, SpecificEmotionActivity.class);
+        intent.putExtra("CATEGORY", category.name());
+        // Don't add any flags that would clear the back stack
+        startActivity(intent);
         overridePendingTransition(R.anim.anim_slide_in_right, R.anim.anim_slide_out_left);
+        // Don't call finish() here, so we remain in the back stack
     }
-
 }

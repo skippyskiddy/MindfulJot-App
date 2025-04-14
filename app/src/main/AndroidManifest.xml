@@ -42,7 +42,7 @@
         <!-- Main Activities -->
         <activity android:name=".HomeActivity" />
         <activity android:name=".PrimaryEmotionActivity" />
-<!--        <activity android:name=".SpecificEmotionActivity" />-->
+        <activity android:name=".SpecificEmotionActivity" />
 <!--        <activity android:name=".JournalSummaryActivity" />-->
 <!--        <activity android:name=".AnalyticsActivity" />-->
 <!--        <activity android:name=".EntriesActivity" />-->

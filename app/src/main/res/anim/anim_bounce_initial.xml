@@ -2,10 +2,10 @@
 <set xmlns:android="http://schemas.android.com/apk/res/android"
     android:interpolator="@android:anim/bounce_interpolator">
     <scale
-        android:duration="300"
-        android:fromXScale="0.95"
+        android:duration="400"
+        android:fromXScale="0.8"
         android:toXScale="1.0"
-        android:fromYScale="0.95"
+        android:fromYScale="0.8"
         android:toYScale="1.0"
         android:pivotX="50%"
         android:pivotY="50%" />
