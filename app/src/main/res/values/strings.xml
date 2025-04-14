@@ -7,5 +7,29 @@
     <string name="no_entries">No entries - log how you feel with the check in button</string>
     <string name="last_check_in">You last checked in on %1$s. Your last logged emotion was %2$s</string>
     <string name="last_check_in_multiple">You last checked in on %1$s. Your last logged emotions were %2$s and %3$s</string>
+
+    <!-- Login/Signup -->
+    <string name="forgot_password">Forgot password?</string>
+    <string name="dont_have_account">Don\'t have an account?</string>
+
+    <!-- Emotions -->
+    <string name="high_energy_pleasant">High Energy,\nPleasant</string>
+    <string name="high_energy_unpleasant">High Energy,\nUnpleasant</string>
+    <string name="low_energy_pleasant">Low Energy,\nPleasant</string>
+    <string name="low_energy_unpleasant">Low Energy,\nUnpleasant</string>
+
+    <!-- Onboarding -->
+    <string name="why_using_mindfuljot">Why are you using MindfulJot?</string>
+    <string name="improve_awareness">Improve emotional awareness</string>
+    <string name="track_patterns">Track mood patterns</string>
+    <string name="reduce_stress">Reduce stress and anxiety</string>
+    <string name="notification_preference">When would you like to be reminded to check in?</string>
+    <string name="notification_subtitle">Enabling notifications will allow us to send you reminders based on your preferred frequency.</string>
+    <string name="once_daily">Once daily</string>
+    <string name="twice_daily">Twice daily</string>
+    <string name="three_times">3x a day</string>
+    <string name="no_reminders">Only when I want to (don\'t remind me)</string>
+    <string name="how_to_log">How to log emotions using MindfulJot</string>
+
 </resources>
 
