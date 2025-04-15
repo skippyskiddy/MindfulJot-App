@@ -18,6 +18,8 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -140,9 +142,118 @@ public class FirebaseHelper {
     }
 
     /**
+     * Callback interface for retrieving a list of filtered EmotionEntry objects.
+     * This listener is used when querying the Firebase Realtime Database
+     * for entries that match a specific condition (e.g. date).
+     * Provides filtered list of entries to caller once data is ready.
+     */
+    public interface FilteredEntriesListener {
+        void onSuccess(List<EmotionEntry> entries);
+        void onFailure(DatabaseError error);
+    }
+
+    /**
+     * Get all emotion entries for a user on a specific date
+     * Uses LocalDate and custom callback
+     */
+    public void getEntriesForDate(String userId, LocalDate date, FilteredEntriesListener listener) {
+        long startOfDay = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
+        long endOfDay = date.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
+
+        Query query = entriesRef.orderByChild("userId").equalTo(userId);
+        query.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                List<EmotionEntry> filteredEntries = new ArrayList<>();
+
+                for (DataSnapshot entrySnapshot : snapshot.getChildren()) {
+                    EmotionEntry entry = entrySnapshot.getValue(EmotionEntry.class);
+                    if (entry != null && entry.getTimestamp() != null) {
+                        long timestamp = entry.getTimestamp().getTime();
+                        if (timestamp >= startOfDay && timestamp < endOfDay) {
+                            filteredEntries.add(entry);
+                        }
+                    }
+                }
+
+                listener.onSuccess(filteredEntries);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                listener.onFailure(error);
+            }
+        });
+    }
+
+    /**
+     * Get all emotion entries for a user
+     * Uses LocalDate and custom callback
+     */
+    public void getAllEntries(String userId, FilteredEntriesListener listener) {
+        Query query = entriesRef.orderByChild("userId").equalTo(userId);
+        query.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                List<EmotionEntry> allEntries = new ArrayList<>();
+
+                for (DataSnapshot entrySnapshot : snapshot.getChildren()) {
+                    EmotionEntry entry = entrySnapshot.getValue(EmotionEntry.class);
+                    if (entry != null && entry.getTimestamp() != null) {
+                        allEntries.add(entry);
+                    }
+                }
+
+                listener.onSuccess(allEntries);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                listener.onFailure(error);
+            }
+        });
+    }
+
+    /**
+     * Get all emotion entries for a user within a specific date range
+     * Uses LocalDate and custom callback
+     */
+    public void getEntriesInRange(String userId, LocalDate startDate, LocalDate endDate, FilteredEntriesListener listener) {
+        long startMillis = startDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
+        long endMillis = endDate.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
+
+        Query query = entriesRef.orderByChild("userId").equalTo(userId);
+        query.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                List<EmotionEntry> filteredEntries = new ArrayList<>();
+
+                for (DataSnapshot entrySnapshot : snapshot.getChildren()) {
+                    EmotionEntry entry = entrySnapshot.getValue(EmotionEntry.class);
+                    if (entry != null && entry.getTimestamp() != null) {
+                        long timestamp = entry.getTimestamp().getTime();
+                        if (timestamp >= startMillis && timestamp < endMillis) {
+                            filteredEntries.add(entry);
+                        }
+                    }
+                }
+
+                listener.onSuccess(filteredEntries);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                listener.onFailure(error);
+            }
+        });
+    }
+
+
+    /**
      * Get all emotion entries for a specific date
      */
-    public void getEntriesForDate(String userId, Date date, ValueEventListener listener) {
+    /*
+    public void getEntriesForDateOLD(String userId, Date date, ValueEventListener listener) {
         // Convert date to start and end timestamps
         // This is simplified - you'd need to handle time conversion properly
         long startOfDay = date.getTime(); // Start of day
@@ -174,6 +285,7 @@ public class FirebaseHelper {
             }
         });
     }
+    */
 
     /**
      * Get all emotions
