@@ -248,6 +248,25 @@ public class FirebaseHelper {
         });
     }
 
+    public interface EntryDeleteCallback {
+        void onSuccess();
+        void onFailure(DatabaseError error);
+    }
+
+    public void deleteEntry(EmotionEntry entry, EntryDeleteCallback callback) {
+        if (entry.getEntryId() == null) {
+            callback.onFailure(DatabaseError.fromException(new IllegalArgumentException("Entry has no ID")));
+            return;
+        }
+
+        entriesRef.child(entry.getEntryId()).removeValue((error, ref) -> {
+            if (error == null) {
+                callback.onSuccess();
+            } else {
+                callback.onFailure(error);
+            }
+        });
+    }
 
     /**
      * Get all emotion entries for a specific date
