@@ -32,7 +32,7 @@ import utils.LoginManager;
 
 public class AnalyticsActivity extends AppCompatActivity implements BottomNavigationView.OnItemSelectedListener {
 
-    private TextView tvAnalyticsTitle, tvStreak, tvLogFrequency;
+    private TextView tvAnalyticsTitle, tvStreak, tvLogFrequency, tvBreakdownTitle;
     private TextView tvHighEnergyPleasant, tvLowEnergyPleasant;
     private TextView tvHighEnergyUnpleasant, tvLowEnergyUnpleasant;
     private Spinner spinnerTimeframe;
@@ -75,6 +75,7 @@ public class AnalyticsActivity extends AppCompatActivity implements BottomNaviga
         tvAnalyticsTitle = findViewById(R.id.tv_analytics_title);
         tvStreak = findViewById(R.id.tv_streak);
         tvLogFrequency = findViewById(R.id.tv_log_frequency);
+        tvBreakdownTitle = findViewById(R.id.tv_breakdown_title);
         tvHighEnergyPleasant = findViewById(R.id.tv_high_energy_pleasant);
         tvLowEnergyPleasant = findViewById(R.id.tv_low_energy_pleasant);
         tvHighEnergyUnpleasant = findViewById(R.id.tv_high_energy_unpleasant);
@@ -100,10 +101,8 @@ public class AnalyticsActivity extends AppCompatActivity implements BottomNaviga
             startActivity(intent);
             return true;
         } else if (itemId == R.id.nav_entries) {
-            // TODO: Navigate to entries screen
-            // Intent intent = new Intent(HomeActivity.this, EntriesActivity.class);
-            // startActivity(intent);
-            return true;
+            Intent intent = new Intent(AnalyticsActivity.this, EntriesActivity.class);
+            startActivity(intent);
         } else if (itemId == R.id.nav_analytics) {
             return true;
         } else if (itemId == R.id.nav_settings) {
@@ -359,6 +358,9 @@ public class AnalyticsActivity extends AppCompatActivity implements BottomNaviga
 
         LocalDate startDate = getStartDateForTimeframe(timeframe);
         LocalDate endDate = LocalDate.now();
+
+        String custom_tf = timeframe.toString().toLowerCase();
+        tvBreakdownTitle.setText("This is your emotion breakdown for " + custom_tf + ":");
 
         firebaseHelper.getEntriesInRange(userId, startDate, endDate, new FirebaseHelper.FilteredEntriesListener() {
             @Override
