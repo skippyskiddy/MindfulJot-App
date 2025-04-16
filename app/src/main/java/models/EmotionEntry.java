@@ -1,5 +1,6 @@
 package models;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -7,7 +8,9 @@ import java.util.List;
 /**
  * Model class representing an emotion entry
  */
-public class EmotionEntry {
+public class EmotionEntry implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private String entryId;
     private String userId;
     private List<Emotion> emotions; // Limited to max 2 emotions per entry

@@ -1,9 +1,13 @@
 package models;
 
+import java.io.Serializable;
+
 /**
  * Model class representing an emotion
  */
-public class Emotion {
+public class Emotion implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     public enum Category {
         HIGH_ENERGY_PLEASANT,
         HIGH_ENERGY_UNPLEASANT,

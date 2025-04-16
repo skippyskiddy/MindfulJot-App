@@ -2,7 +2,6 @@ package edu.northeastern.numad25sp_group4;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -45,6 +44,7 @@ public class SpecificEmotionActivity extends AppCompatActivity implements Emotio
     private EmotionAdapter adapter;
     private Emotion.Category selectedCategory;
     private EmotionEntry currentEntry;
+    private boolean isAddingSecondEmotion = false;
     private FirebaseHelper firebaseHelper;
     private Emotion selectedEmotion;
 
@@ -135,15 +135,28 @@ public class SpecificEmotionActivity extends AppCompatActivity implements Emotio
     }
 
     private void initEmotionEntry() {
+        // Check if we're getting an existing entry from the intent
+        if (getIntent().hasExtra("CURRENT_ENTRY")) {
+            try {
+                currentEntry = (EmotionEntry) getIntent().getSerializableExtra("CURRENT_ENTRY");
+                isAddingSecondEmotion = getIntent().getBooleanExtra("ADDING_SECOND_EMOTION", false);
+            } catch (Exception e) {
+                e.printStackTrace();
+                // If there's an error, we'll create a new entry below
+            }
+        }
+
         // Check if we're editing an existing entry
-        if (getIntent().hasExtra("ENTRY_ID")) {
+        if (currentEntry == null && getIntent().hasExtra("ENTRY_ID")) {
             String entryId = getIntent().getStringExtra("ENTRY_ID");
             // TODO: Load the entry from Firebase
             // For now, create a new entry
             currentEntry = new EmotionEntry();
             currentEntry.setEntryId(entryId);
-        } else {
-            // Create a new entry
+        }
+
+        // If still null, create a new entry
+        if (currentEntry == null) {
             currentEntry = new EmotionEntry();
             // Set current user ID and timestamp
             if (firebaseHelper.getCurrentUser() != null) {
@@ -246,41 +259,46 @@ public class SpecificEmotionActivity extends AppCompatActivity implements Emotio
             currentEntry.setTimestamp(new java.util.Date());
         }
 
-        // Check if entry already has this emotion category
-        boolean hasCategory = false;
-        if (currentEntry.getEmotions() != null) {
-            for (int i = 0; i < currentEntry.getEmotions().size(); i++) {
-                Emotion existing = currentEntry.getEmotions().get(i);
-                if (existing.getCategory() == selectedEmotion.getCategory()) {
-                    // Replace existing emotion of this category
-                    currentEntry.getEmotions().set(i, selectedEmotion);
-                    hasCategory = true;
-                    break;
+        // Check if this is a second emotion (adding second emotion flow)
+        if (isAddingSecondEmotion) {
+            // This is a second emotion, just add it to the existing list
+            // First check if we already have 2 emotions (max limit)
+            if (currentEntry.getEmotions() != null && currentEntry.getEmotions().size() >= 2) {
+                // We already have 2 emotions, replace the second one
+                if (currentEntry.getEmotions().size() > 1) {
+                    currentEntry.getEmotions().set(1, selectedEmotion);
+                } else {
+                    // Or add as second emotion
+                    currentEntry.addEmotion(selectedEmotion);
                 }
+            } else {
+                // Just add the emotion
+                currentEntry.addEmotion(selectedEmotion);
             }
-        }
-
-        // Add emotion if not replacing
-        if (!hasCategory) {
+        } else {
+            // This is the first emotion or we're replacing all emotions
+            // Clear existing emotions first
+            if (currentEntry.getEmotions() != null) {
+                currentEntry.getEmotions().clear();
+            }
+            // Add the selected emotion
             currentEntry.addEmotion(selectedEmotion);
         }
     }
 
     private void navigateToJournalSummary() {
-        // TODO: Create JournalSummaryActivity and navigate to it
-        // For now, we'll just return to HomeActivity
-        Toast.makeText(this, "Selected: " + selectedEmotion.getName(), Toast.LENGTH_SHORT).show();
-
-        // Temporary: return to home after selection
-        // In the final app, this should navigate to JournalSummaryActivity
-        Intent intent = new Intent(SpecificEmotionActivity.this, HomeActivity.class);
+        // Navigate to JournalSummaryActivity with the updated emotion entry
+        Intent intent = new Intent(SpecificEmotionActivity.this, JournalSummaryActivity.class);
+        intent.putExtra("CURRENT_ENTRY", currentEntry);
         startActivity(intent);
-        finish();
 
-        // TODO: Replace with this when JournalSummaryActivity is implemented:
-        // Intent intent = new Intent(SpecificEmotionActivity.this, JournalSummaryActivity.class);
-        // intent.putExtra("ENTRY_ID", currentEntry.getEntryId());
-        // startActivity(intent);
-        // overridePendingTransition(R.anim.anim_slide_in_right, R.anim.anim_slide_out_left);
+        // Use the slide animation
+        overridePendingTransition(R.anim.anim_slide_in_right, R.anim.anim_slide_out_left);
+
+        // If we're adding a second emotion, we should finish this and the PrimaryEmotionActivity
+        // so the back button from JournalSummary doesn't go through the emotion selection again
+        if (isAddingSecondEmotion) {
+            finish();
+        }
     }
 }

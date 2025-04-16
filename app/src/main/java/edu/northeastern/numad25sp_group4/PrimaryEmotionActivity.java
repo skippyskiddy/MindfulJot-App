@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 
 import models.Emotion;
+import models.EmotionEntry;
 
 /**
  * Activity for selecting primary emotion category
@@ -26,10 +27,30 @@ public class PrimaryEmotionActivity extends AppCompatActivity {
     private CardView cardLowEnergyPleasant;
     private CardView cardLowEnergyUnpleasant;
 
+    private EmotionEntry currentEntry;
+    private boolean isAddingSecondEmotion = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_primary_emotion);
+
+        // Get entry from intent (if we're adding a second emotion)
+        if (getIntent().hasExtra("CURRENT_ENTRY")) {
+            try {
+                currentEntry = (EmotionEntry) getIntent().getSerializableExtra("CURRENT_ENTRY");
+                isAddingSecondEmotion = getIntent().getBooleanExtra("ADDING_SECOND_EMOTION", false);
+            } catch (Exception e) {
+                e.printStackTrace();
+                // If there's an error, we'll create a new entry below
+            }
+        }
+
+        // Create new entry if needed
+        if (currentEntry == null) {
+            currentEntry = new EmotionEntry();
+            isAddingSecondEmotion = false;
+        }
 
         // Initialize views
         initViews();
@@ -77,9 +98,14 @@ public class PrimaryEmotionActivity extends AppCompatActivity {
     private void setupListeners() {
         // Back button click listener
         btnBack.setOnClickListener(v -> {
-            // Simply finish the activity to go back to HomeActivity
-            finish();
-            overridePendingTransition(R.anim.anim_slide_in_left, R.anim.anim_slide_out_right);
+            // If adding second emotion, return to journal summary
+            if (isAddingSecondEmotion) {
+                returnToJournalSummary();
+            } else {
+                // Otherwise, finish the activity to go back to HomeActivity
+                finish();
+                overridePendingTransition(R.anim.anim_slide_in_left, R.anim.anim_slide_out_right);
+            }
         });
 
         // High Energy Pleasant quadrant click listener
@@ -162,9 +188,38 @@ public class PrimaryEmotionActivity extends AppCompatActivity {
         // Navigate to SpecificEmotionActivity with selected category
         Intent intent = new Intent(PrimaryEmotionActivity.this, SpecificEmotionActivity.class);
         intent.putExtra("CATEGORY", category.name());
+
+        // Pass the current entry and adding second emotion flag if relevant
+        if (currentEntry != null) {
+            intent.putExtra("CURRENT_ENTRY", currentEntry);
+            intent.putExtra("ADDING_SECOND_EMOTION", isAddingSecondEmotion);
+        }
+
         // Don't add any flags that would clear the back stack
         startActivity(intent);
         overridePendingTransition(R.anim.anim_slide_in_right, R.anim.anim_slide_out_left);
         // Don't call finish() here, so we remain in the back stack
+    }
+
+    /**
+     * Return to JournalSummaryActivity when user cancels adding a second emotion
+     */
+    private void returnToJournalSummary() {
+        Intent intent = new Intent(PrimaryEmotionActivity.this, JournalSummaryActivity.class);
+        intent.putExtra("CURRENT_ENTRY", currentEntry);
+        startActivity(intent);
+        finish(); // Remove this activity from the stack
+    }
+
+    @Override
+    public void onBackPressed() {
+        // If adding second emotion, return to journal summary
+        if (isAddingSecondEmotion) {
+            returnToJournalSummary();
+        } else {
+            // Otherwise, do the default back behavior
+            super.onBackPressed();
+            overridePendingTransition(R.anim.anim_slide_in_left, R.anim.anim_slide_out_right);
+        }
     }
 }

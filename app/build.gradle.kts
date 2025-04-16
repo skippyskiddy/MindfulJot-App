@@ -36,9 +36,13 @@ dependencies {
     // Firebase
     implementation(platform("com.google.firebase:firebase-bom:32.7.3"))
     implementation("com.google.firebase:firebase-database")
-    implementation("com.google.firebase:firebase-storage")
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-analytics")
+    implementation ("com.google.firebase:firebase-storage:20.2.1")
+
+
+    // Picasso for image loading
+    implementation ("com.squareup.picasso:picasso:2.71828")
 
 
     implementation("com.github.bumptech.glide:glide:4.16.0")
