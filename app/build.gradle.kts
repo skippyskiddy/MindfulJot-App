@@ -40,6 +40,9 @@ dependencies {
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-analytics")
 
+    // CalendarView library
+    // https://github.com/Applandeo/Material-Calendar-View
+    implementation("com.applandeo:material-calendar-view:1.9.2")
 
     implementation("com.github.bumptech.glide:glide:4.16.0")
     annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
