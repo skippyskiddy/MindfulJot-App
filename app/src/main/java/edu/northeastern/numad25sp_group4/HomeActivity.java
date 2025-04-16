@@ -110,14 +110,12 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationV
             // Already on home screen
             return true;
         } else if (itemId == R.id.nav_entries) {
-            // TODO: Navigate to entries screen
-            // Intent intent = new Intent(HomeActivity.this, EntriesActivity.class);
-            // startActivity(intent);
+            Intent intent = new Intent(HomeActivity.this, EntriesActivity.class);
+            startActivity(intent);
             return true;
         } else if (itemId == R.id.nav_analytics) {
-            // TODO: Navigate to analytics screen
-            // Intent intent = new Intent(HomeActivity.this, AnalyticsActivity.class);
-            // startActivity(intent);
+            Intent intent = new Intent(HomeActivity.this, AnalyticsActivity.class);
+            startActivity(intent);
             return true;
         } else if (itemId == R.id.nav_settings) {
             // TODO: Navigate to settings screen
