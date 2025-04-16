@@ -46,7 +46,8 @@
         android:layout_marginStart="24dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="24dp"
-        android:text="Emotions are ordered from highest energy to lowest energy. Long press on each emotion card for a definition of each emotion.  "        android:textAlignment="center"
+        android:text="Emotions are ordered from highest energy to lowest energy. Long press on each emotion card for a definition of each emotion."
+        android:textAlignment="center"
         android:textColor="@color/white"
         android:textSize="16sp"
         app:layout_constraintEnd_toEndOf="parent"
@@ -67,32 +68,50 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tv_subtitle" />
 
-    <!-- Emotions RecyclerView -->
+    <!-- Progress Bar -->
+    <ProgressBar
+        android:id="@+id/progress_bar"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- RecyclerView - Takes all available space between header and navigation buttons -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_emotions"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginStart="16dp"
         android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
         android:layout_marginBottom="16dp"
         android:clipToPadding="false"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:scrollbars="vertical"
+        android:scrollbarThumbVertical="@color/white"
+        android:scrollbarTrackVertical="@color/card_background"
+        android:scrollbarStyle="outsideOverlay"
+        android:fadeScrollbars="false"
+        android:overScrollMode="always"
         app:layout_constraintBottom_toTopOf="@+id/navigation_buttons"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tv_category_title"
         tools:listitem="@layout/item_emotion" />
 
-    <!-- Navigation Buttons Container -->
+    <!-- Bottom Navigation Section -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/navigation_buttons"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="24dp"
         android:paddingStart="24dp"
         android:paddingEnd="24dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="24dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">

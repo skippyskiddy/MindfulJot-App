@@ -151,6 +151,7 @@ public class FirebaseHelper {
      */
     public interface FilteredEntriesListener {
         void onSuccess(List<EmotionEntry> entries);
+
         void onFailure(DatabaseError error);
     }
 
@@ -252,6 +253,7 @@ public class FirebaseHelper {
 
     public interface EntryDeleteCallback {
         void onSuccess();
+
         void onFailure(DatabaseError error);
     }
 
@@ -365,38 +367,118 @@ public class FirebaseHelper {
     }
 
     /**
-     * Create default set of emotions
+     * Moodmeter emotions
      */
     private void createDefaultEmotions() {
         Map<String, Emotion> emotions = new HashMap<>();
 
-        // High Energy Pleasant
-        emotions.put("excited", new Emotion("Excited", Emotion.Category.HIGH_ENERGY_PLEASANT, "Feeling very enthusiastic and eager", 10));
-        emotions.put("joyful", new Emotion("Joyful", Emotion.Category.HIGH_ENERGY_PLEASANT, "Feeling happiness and delight", 9));
-        emotions.put("proud", new Emotion("Proud", Emotion.Category.HIGH_ENERGY_PLEASANT, "Feeling deep satisfaction with achievements", 8));
-        emotions.put("optimistic", new Emotion("Optimistic", Emotion.Category.HIGH_ENERGY_PLEASANT, "Feeling hopeful about the future", 7));
-        emotions.put("cheerful", new Emotion("Cheerful", Emotion.Category.HIGH_ENERGY_PLEASANT, "Feeling noticeably happy and positive", 6));
+        // HIGH ENERGY, LOW PLEASANTNESS (Red quadrant)
+        emotions.put("enraged", new Emotion("Enraged", Emotion.Category.HIGH_ENERGY_UNPLEASANT, "Feeling intense, uncontrollable anger", 25));
+        emotions.put("panicked", new Emotion("Panicked", Emotion.Category.HIGH_ENERGY_UNPLEASANT, "Feeling sudden, overwhelming fear", 24));
+        emotions.put("stressed", new Emotion("Stressed", Emotion.Category.HIGH_ENERGY_UNPLEASANT, "Feeling mental or emotional pressure", 23));
+        emotions.put("jittery", new Emotion("Jittery", Emotion.Category.HIGH_ENERGY_UNPLEASANT, "Feeling nervous and unable to relax", 22));
+        emotions.put("shocked", new Emotion("Shocked", Emotion.Category.HIGH_ENERGY_UNPLEASANT, "Feeling sudden, intense surprise", 21));
+        emotions.put("livid", new Emotion("Livid", Emotion.Category.HIGH_ENERGY_UNPLEASANT, "Feeling extremely angry", 20));
+        emotions.put("furious", new Emotion("Furious", Emotion.Category.HIGH_ENERGY_UNPLEASANT, "Feeling intense, passionate anger", 19));
+        emotions.put("frustrated", new Emotion("Frustrated", Emotion.Category.HIGH_ENERGY_UNPLEASANT, "Feeling upset and annoyed at unresolved problems", 18));
+        emotions.put("tense", new Emotion("Tense", Emotion.Category.HIGH_ENERGY_UNPLEASANT, "Feeling physically or mentally strained", 17));
+        emotions.put("stunned", new Emotion("Stunned", Emotion.Category.HIGH_ENERGY_UNPLEASANT, "Feeling shocked to the point of being unable to react", 16));
+        emotions.put("fuming", new Emotion("Fuming", Emotion.Category.HIGH_ENERGY_UNPLEASANT, "Feeling extremely angry and showing it", 15));
+        emotions.put("frightened", new Emotion("Frightened", Emotion.Category.HIGH_ENERGY_UNPLEASANT, "Feeling afraid or scared", 14));
+        emotions.put("angry", new Emotion("Angry", Emotion.Category.HIGH_ENERGY_UNPLEASANT, "Feeling strong displeasure or hostility", 13));
+        emotions.put("nervous", new Emotion("Nervous", Emotion.Category.HIGH_ENERGY_UNPLEASANT, "Feeling worried and uneasy", 12));
+        emotions.put("restless", new Emotion("Restless", Emotion.Category.HIGH_ENERGY_UNPLEASANT, "Feeling unable to rest or relax", 11));
+        emotions.put("anxious", new Emotion("Anxious", Emotion.Category.HIGH_ENERGY_UNPLEASANT, "Feeling worried or nervous", 10));
+        emotions.put("apprehensive", new Emotion("Apprehensive", Emotion.Category.HIGH_ENERGY_UNPLEASANT, "Feeling fear or anxiety about the future", 9));
+        emotions.put("worried", new Emotion("Worried", Emotion.Category.HIGH_ENERGY_UNPLEASANT, "Feeling troubled about actual or potential problems", 8));
+        emotions.put("irritated", new Emotion("Irritated", Emotion.Category.HIGH_ENERGY_UNPLEASANT, "Feeling annoyed or bothered", 7));
+        emotions.put("annoyed", new Emotion("Annoyed", Emotion.Category.HIGH_ENERGY_UNPLEASANT, "Feeling slightly angry", 6));
+        emotions.put("repulsed", new Emotion("Repulsed", Emotion.Category.HIGH_ENERGY_UNPLEASANT, "Feeling strong dislike or disgust", 5));
+        emotions.put("troubled", new Emotion("Troubled", Emotion.Category.HIGH_ENERGY_UNPLEASANT, "Feeling worried and unhappy", 4));
+        emotions.put("concerned", new Emotion("Concerned", Emotion.Category.HIGH_ENERGY_UNPLEASANT, "Feeling worried or anxious", 3));
+        emotions.put("uneasy", new Emotion("Uneasy", Emotion.Category.HIGH_ENERGY_UNPLEASANT, "Feeling uncomfortable or worried", 2));
+        emotions.put("peeved", new Emotion("Peeved", Emotion.Category.HIGH_ENERGY_UNPLEASANT, "Feeling mildly annoyed", 1));
 
-        // High Energy Unpleasant
-        emotions.put("angry", new Emotion("Angry", Emotion.Category.HIGH_ENERGY_UNPLEASANT, "Feeling strong displeasure or hostility", 10));
-        emotions.put("anxious", new Emotion("Anxious", Emotion.Category.HIGH_ENERGY_UNPLEASANT, "Feeling worried or nervous", 9));
-        emotions.put("frustrated", new Emotion("Frustrated", Emotion.Category.HIGH_ENERGY_UNPLEASANT, "Feeling upset and annoyed at unresolved problems", 8));
-        emotions.put("stressed", new Emotion("Stressed", Emotion.Category.HIGH_ENERGY_UNPLEASANT, "Feeling mental or emotional strain", 7));
-        emotions.put("overwhelmed", new Emotion("Overwhelmed", Emotion.Category.HIGH_ENERGY_UNPLEASANT, "Feeling buried under too many tasks or emotions", 6));
+        // HIGH ENERGY, HIGH PLEASANTNESS (Yellow quadrant)
+        emotions.put("surprised", new Emotion("Surprised", Emotion.Category.HIGH_ENERGY_PLEASANT, "Feeling caught off guard by an unexpected event", 25));
+        emotions.put("upbeat", new Emotion("Upbeat", Emotion.Category.HIGH_ENERGY_PLEASANT, "Feeling positive and cheerful", 24));
+        emotions.put("festive", new Emotion("Festive", Emotion.Category.HIGH_ENERGY_PLEASANT, "Feeling joyous and celebratory", 23));
+        emotions.put("exhilarated", new Emotion("Exhilarated", Emotion.Category.HIGH_ENERGY_PLEASANT, "Feeling extreme happiness and excitement", 22));
+        emotions.put("ecstatic", new Emotion("Ecstatic", Emotion.Category.HIGH_ENERGY_PLEASANT, "Feeling overwhelming happiness and joy", 21));
+        emotions.put("hyper", new Emotion("Hyper", Emotion.Category.HIGH_ENERGY_PLEASANT, "Feeling energetic and unable to calm down", 20));
+        emotions.put("cheerful", new Emotion("Cheerful", Emotion.Category.HIGH_ENERGY_PLEASANT, "Feeling noticeably happy and positive", 19));
+        emotions.put("motivated", new Emotion("Motivated", Emotion.Category.HIGH_ENERGY_PLEASANT, "Feeling eager and driven to act", 18));
+        emotions.put("inspired", new Emotion("Inspired", Emotion.Category.HIGH_ENERGY_PLEASANT, "Feeling creative and mentally stimulated", 17));
+        emotions.put("elated", new Emotion("Elated", Emotion.Category.HIGH_ENERGY_PLEASANT, "Feeling extremely happy and excited", 16));
+        emotions.put("energized", new Emotion("Energized", Emotion.Category.HIGH_ENERGY_PLEASANT, "Feeling full of energy and vitality", 15));
+        emotions.put("lively", new Emotion("Lively", Emotion.Category.HIGH_ENERGY_PLEASANT, "Feeling full of life and energy", 14));
+        emotions.put("excited", new Emotion("Excited", Emotion.Category.HIGH_ENERGY_PLEASANT, "Feeling very enthusiastic and eager", 13));
+        emotions.put("optimistic", new Emotion("Optimistic", Emotion.Category.HIGH_ENERGY_PLEASANT, "Feeling hopeful about the future", 12));
+        emotions.put("enthusiastic", new Emotion("Enthusiastic", Emotion.Category.HIGH_ENERGY_PLEASANT, "Feeling eager interest and excitement", 11));
+        emotions.put("pleased", new Emotion("Pleased", Emotion.Category.HIGH_ENERGY_PLEASANT, "Feeling happiness and satisfaction", 10));
+        emotions.put("focused", new Emotion("Focused", Emotion.Category.HIGH_ENERGY_PLEASANT, "Feeling concentrated attention", 9));
+        emotions.put("happy", new Emotion("Happy", Emotion.Category.HIGH_ENERGY_PLEASANT, "Feeling or showing pleasure and contentment", 8));
+        emotions.put("proud", new Emotion("Proud", Emotion.Category.HIGH_ENERGY_PLEASANT, "Feeling deep satisfaction with achievements", 7));
+        emotions.put("thrilled", new Emotion("Thrilled", Emotion.Category.HIGH_ENERGY_PLEASANT, "Feeling extremely pleased and excited", 6));
+        emotions.put("pleasant", new Emotion("Pleasant", Emotion.Category.HIGH_ENERGY_PLEASANT, "Feeling agreeable and enjoyable", 5));
+        emotions.put("joyful", new Emotion("Joyful", Emotion.Category.HIGH_ENERGY_PLEASANT, "Feeling happiness and delight", 4));
+        emotions.put("hopeful", new Emotion("Hopeful", Emotion.Category.HIGH_ENERGY_PLEASANT, "Feeling optimistic about the future", 3));
+        emotions.put("playful", new Emotion("Playful", Emotion.Category.HIGH_ENERGY_PLEASANT, "Feeling lighthearted and full of fun", 2));
+        emotions.put("blissful", new Emotion("Blissful", Emotion.Category.HIGH_ENERGY_PLEASANT, "Feeling extremely happy and serene", 1));
 
-        // Low Energy Pleasant
-        emotions.put("calm", new Emotion("Calm", Emotion.Category.LOW_ENERGY_PLEASANT, "Feeling tranquil and peaceful", 4));
-        emotions.put("content", new Emotion("Content", Emotion.Category.LOW_ENERGY_PLEASANT, "Feeling satisfied with current state", 3));
-        emotions.put("relaxed", new Emotion("Relaxed", Emotion.Category.LOW_ENERGY_PLEASANT, "Feeling free from tension", 2));
-        emotions.put("grateful", new Emotion("Grateful", Emotion.Category.LOW_ENERGY_PLEASANT, "Feeling thankful and appreciative", 4));
+        // LOW ENERGY, LOW PLEASANTNESS (Blue quadrant)
+        emotions.put("disgusted", new Emotion("Disgusted", Emotion.Category.LOW_ENERGY_UNPLEASANT, "Feeling strong dislike or distaste", 25));
+        emotions.put("glum", new Emotion("Glum", Emotion.Category.LOW_ENERGY_UNPLEASANT, "Feeling dejected and unhappy", 24));
+        emotions.put("disappointed", new Emotion("Disappointed", Emotion.Category.LOW_ENERGY_UNPLEASANT, "Feeling let down by failing expectations", 23));
+        emotions.put("down", new Emotion("Down", Emotion.Category.LOW_ENERGY_UNPLEASANT, "Feeling unhappy or depressed", 22));
+        emotions.put("apathetic", new Emotion("Apathetic", Emotion.Category.LOW_ENERGY_UNPLEASANT, "Feeling indifferent or uncaring", 21));
+        emotions.put("pessimistic", new Emotion("Pessimistic", Emotion.Category.LOW_ENERGY_UNPLEASANT, "Feeling that bad things will happen", 20));
+        emotions.put("morose", new Emotion("Morose", Emotion.Category.LOW_ENERGY_UNPLEASANT, "Feeling gloomy and sullen", 19));
+        emotions.put("discouraged", new Emotion("Discouraged", Emotion.Category.LOW_ENERGY_UNPLEASANT, "Feeling a loss of confidence or enthusiasm", 18));
+        emotions.put("sad", new Emotion("Sad", Emotion.Category.LOW_ENERGY_UNPLEASANT, "Feeling sorrow or unhappiness", 17));
+        emotions.put("bored", new Emotion("Bored", Emotion.Category.LOW_ENERGY_UNPLEASANT, "Feeling weary from lack of interest", 16));
+        emotions.put("alienated", new Emotion("Alienated", Emotion.Category.LOW_ENERGY_UNPLEASANT, "Feeling isolated or disconnected", 15));
+        emotions.put("miserable", new Emotion("Miserable", Emotion.Category.LOW_ENERGY_UNPLEASANT, "Feeling extremely unhappy or uncomfortable", 14));
+        emotions.put("lonely", new Emotion("Lonely", Emotion.Category.LOW_ENERGY_UNPLEASANT, "Feeling isolated or without companionship", 13));
+        emotions.put("disheartened", new Emotion("Disheartened", Emotion.Category.LOW_ENERGY_UNPLEASANT, "Feeling a loss of hope or courage", 12));
+        emotions.put("tired", new Emotion("Tired", Emotion.Category.LOW_ENERGY_UNPLEASANT, "Feeling in need of rest or sleep", 11));
+        emotions.put("despondent", new Emotion("Despondent", Emotion.Category.LOW_ENERGY_UNPLEASANT, "Feeling extreme discouragement", 10));
+        emotions.put("depressed", new Emotion("Depressed", Emotion.Category.LOW_ENERGY_UNPLEASANT, "Feeling persistent sadness and loss of interest", 9));
+        emotions.put("sullen", new Emotion("Sullen", Emotion.Category.LOW_ENERGY_UNPLEASANT, "Feeling resentful and gloomy", 8));
+        emotions.put("exhausted", new Emotion("Exhausted", Emotion.Category.LOW_ENERGY_UNPLEASANT, "Feeling completely drained of energy", 7));
+        emotions.put("fatigued", new Emotion("Fatigued", Emotion.Category.LOW_ENERGY_UNPLEASANT, "Feeling extreme physical or mental tiredness", 6));
+        emotions.put("despairing", new Emotion("Despairing", Emotion.Category.LOW_ENERGY_UNPLEASANT, "Feeling complete loss of hope", 5));
+        emotions.put("hopeless", new Emotion("Hopeless", Emotion.Category.LOW_ENERGY_UNPLEASANT, "Feeling that there is no possibility of comfort or success", 4));
+        emotions.put("desolate", new Emotion("Desolate", Emotion.Category.LOW_ENERGY_UNPLEASANT, "Feeling abandoned and lonely", 3));
+        emotions.put("spent", new Emotion("Spent", Emotion.Category.LOW_ENERGY_UNPLEASANT, "Feeling completely used up", 2));
+        emotions.put("drained", new Emotion("Drained", Emotion.Category.LOW_ENERGY_UNPLEASANT, "Feeling completely exhausted physically or emotionally", 1));
+
+        // LOW ENERGY, HIGH PLEASANTNESS (Green quadrant)
+        emotions.put("at_ease", new Emotion("At Ease", Emotion.Category.LOW_ENERGY_PLEASANT, "Feeling comfortable and relaxed", 25));
+        emotions.put("easygoing", new Emotion("Easygoing", Emotion.Category.LOW_ENERGY_PLEASANT, "Feeling relaxed and tolerant", 24));
+        emotions.put("content", new Emotion("Content", Emotion.Category.LOW_ENERGY_PLEASANT, "Feeling satisfied with current state", 23));
+        emotions.put("loving", new Emotion("Loving", Emotion.Category.LOW_ENERGY_PLEASANT, "Feeling deep affection", 22));
+        emotions.put("fulfilled", new Emotion("Fulfilled", Emotion.Category.LOW_ENERGY_PLEASANT, "Feeling satisfied and complete", 21));
+        emotions.put("calm", new Emotion("Calm", Emotion.Category.LOW_ENERGY_PLEASANT, "Feeling tranquil and peaceful", 20));
+        emotions.put("secure", new Emotion("Secure", Emotion.Category.LOW_ENERGY_PLEASANT, "Feeling safe and free from worry", 19));
+        emotions.put("satisfied", new Emotion("Satisfied", Emotion.Category.LOW_ENERGY_PLEASANT, "Feeling content with what one has", 18));
+        emotions.put("grateful", new Emotion("Grateful", Emotion.Category.LOW_ENERGY_PLEASANT, "Feeling thankful and appreciative", 17));
+        emotions.put("touched", new Emotion("Touched", Emotion.Category.LOW_ENERGY_PLEASANT, "Feeling emotionally moved", 16));
+        emotions.put("relaxed", new Emotion("Relaxed", Emotion.Category.LOW_ENERGY_PLEASANT, "Feeling free from tension", 15));
+        emotions.put("chill", new Emotion("Chill", Emotion.Category.LOW_ENERGY_PLEASANT, "Feeling relaxed and easygoing", 14));
+        emotions.put("restful", new Emotion("Restful", Emotion.Category.LOW_ENERGY_PLEASANT, "Feeling calm and peaceful", 13));
+        emotions.put("blessed", new Emotion("Blessed", Emotion.Category.LOW_ENERGY_PLEASANT, "Feeling fortunate and favored", 12));
+        emotions.put("balanced", new Emotion("Balanced", Emotion.Category.LOW_ENERGY_PLEASANT, "Feeling stable and harmonious", 11));
+        emotions.put("mellow", new Emotion("Mellow", Emotion.Category.LOW_ENERGY_PLEASANT, "Feeling softened by experience", 10));
+        emotions.put("thoughtful", new Emotion("Thoughtful", Emotion.Category.LOW_ENERGY_PLEASANT, "Feeling considerate and reflective", 9));
+        emotions.put("peaceful", new Emotion("Peaceful", Emotion.Category.LOW_ENERGY_PLEASANT, "Feeling free from disturbance", 8));
+        emotions.put("comfortable", new Emotion("Comfortable", Emotion.Category.LOW_ENERGY_PLEASANT, "Feeling physically at ease", 7));
+        emotions.put("carefree", new Emotion("Carefree", Emotion.Category.LOW_ENERGY_PLEASANT, "Feeling free from worry or responsibility", 6));
+        emotions.put("sleepy", new Emotion("Sleepy", Emotion.Category.LOW_ENERGY_PLEASANT, "Feeling ready for sleep", 5));
+        emotions.put("complacent", new Emotion("Complacent", Emotion.Category.LOW_ENERGY_PLEASANT, "Feeling self-satisfied", 4));
+        emotions.put("tranquil", new Emotion("Tranquil", Emotion.Category.LOW_ENERGY_PLEASANT, "Feeling free from disturbance or agitation", 3));
+        emotions.put("cozy", new Emotion("Cozy", Emotion.Category.LOW_ENERGY_PLEASANT, "Feeling warm and comfortable", 2));
         emotions.put("serene", new Emotion("Serene", Emotion.Category.LOW_ENERGY_PLEASANT, "Feeling clear and calm", 1));
-
-        // Low Energy Unpleasant
-        emotions.put("sad", new Emotion("Sad", Emotion.Category.LOW_ENERGY_UNPLEASANT, "Feeling sorrow or unhappiness", 4));
-        emotions.put("tired", new Emotion("Tired", Emotion.Category.LOW_ENERGY_UNPLEASANT, "Feeling in need of rest or sleep", 3));
-        emotions.put("bored", new Emotion("Bored", Emotion.Category.LOW_ENERGY_UNPLEASANT, "Feeling weary from lack of interest", 2));
-        emotions.put("disappointed", new Emotion("Disappointed", Emotion.Category.LOW_ENERGY_UNPLEASANT, "Feeling let down or discouraged", 4));
-        emotions.put("lonely", new Emotion("Lonely", Emotion.Category.LOW_ENERGY_UNPLEASANT, "Feeling isolated or without companionship", 3));
 
         // Save all emotions to database
         emotions.forEach((key, emotion) -> {

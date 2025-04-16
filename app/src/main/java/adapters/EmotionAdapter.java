@@ -1,6 +1,7 @@
 package adapters;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,6 +22,7 @@ import models.Emotion;
 
 public class EmotionAdapter extends RecyclerView.Adapter<EmotionAdapter.EmotionViewHolder> {
 
+    private static final String TAG = "EmotionAdapter";
     private final Context context;
     private final List<Emotion> emotionList;
     private int selectedPosition = -1;
@@ -37,11 +39,13 @@ public class EmotionAdapter extends RecyclerView.Adapter<EmotionAdapter.EmotionV
         this.emotionList = new ArrayList<>();
         this.listener = listener;
         this.category = category;
+        Log.d(TAG, "EmotionAdapter created for category: " + category.name());
     }
 
     @NonNull
     @Override
     public EmotionViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        Log.d(TAG, "onCreateViewHolder called");
         View view = LayoutInflater.from(context).inflate(R.layout.item_emotion, parent, false);
         return new EmotionViewHolder(view);
     }
@@ -49,6 +53,8 @@ public class EmotionAdapter extends RecyclerView.Adapter<EmotionAdapter.EmotionV
     @Override
     public void onBindViewHolder(@NonNull EmotionViewHolder holder, int position) {
         Emotion emotion = emotionList.get(position);
+        Log.d(TAG, "Binding emotion at position " + position + ": " + emotion.getName());
+
         holder.tvEmotionName.setText(emotion.getName());
 
         // Apply color based on energy level - higher energy emotions have brighter/more vibrant colors
@@ -85,6 +91,7 @@ public class EmotionAdapter extends RecyclerView.Adapter<EmotionAdapter.EmotionV
 
         // Selection status
         if (selectedPosition == position) {
+            Log.d(TAG, "Setting selected state for position " + position);
             holder.cardEmotion.setStrokeWidth(4);
             holder.cardEmotion.setStrokeColor(context.getResources().getColor(R.color.white));
         } else {
@@ -93,6 +100,7 @@ public class EmotionAdapter extends RecyclerView.Adapter<EmotionAdapter.EmotionV
 
         // Click listener
         holder.cardEmotion.setOnClickListener(v -> {
+            Log.d(TAG, "Card clicked at position " + holder.getAdapterPosition());
             int previousSelected = selectedPosition;
             selectedPosition = holder.getAdapterPosition();
 
@@ -106,6 +114,7 @@ public class EmotionAdapter extends RecyclerView.Adapter<EmotionAdapter.EmotionV
 
         // Long click listener for tooltip
         holder.cardEmotion.setOnLongClickListener(v -> {
+            Log.d(TAG, "Long press detected on emotion: " + emotion.getName());
             showDefinitionTooltip(v, emotion);
             return true;
         });
@@ -113,18 +122,29 @@ public class EmotionAdapter extends RecyclerView.Adapter<EmotionAdapter.EmotionV
 
     @Override
     public int getItemCount() {
-        return emotionList.size();
+        int count = emotionList.size();
+        Log.d(TAG, "getItemCount returning: " + count);
+        return count;
     }
 
     public void setEmotions(List<Emotion> emotions) {
+        Log.d(TAG, "setEmotions called with " + emotions.size() + " emotions");
         this.emotionList.clear();
         this.emotionList.addAll(emotions);
         // Reset selection when updating emotions
         selectedPosition = -1;
+
+        // Log each emotion being added
+        for (int i = 0; i < emotions.size(); i++) {
+            Log.d(TAG, "Emotion " + i + ": " + emotions.get(i).getName());
+        }
+
         notifyDataSetChanged();
+        Log.d(TAG, "Adapter data updated, new count: " + emotionList.size());
     }
 
     private void showDefinitionTooltip(View anchorView, Emotion emotion) {
+        Log.d(TAG, "Showing tooltip for emotion: " + emotion.getName());
         // Create popup layout
         View tooltipView = LayoutInflater.from(context).inflate(R.layout.layout_emotion_tooltip, null);
 
