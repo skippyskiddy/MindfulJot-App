@@ -9,6 +9,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -140,11 +141,11 @@ public class EntryListActivity extends AppCompatActivity {
 
             @Override
             public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-                int position = viewHolder.getBindingAdapterPosition();
+                int position = viewHolder.getAdapterPosition();
                 EmotionEntry entryToDelete = emotionEntries.get(position);
 
                 // Show confirmation dialog
-                new androidx.appcompat.app.AlertDialog.Builder(EntryListActivity.this)
+                new AlertDialog.Builder(EntryListActivity.this)
                         .setTitle("Delete Entry")
                         .setMessage("Are you sure you want to delete this entry?")
                         .setPositiveButton("Delete", (dialog, which) -> {
