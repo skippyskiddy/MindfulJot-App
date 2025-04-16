@@ -45,7 +45,7 @@
         <activity android:name=".SpecificEmotionActivity" />
         <activity android:name=".AnalyticsActivity" />
         <activity android:name=".EntriesActivity" />
-        <!--<activity android:name=".EntryListActivity" />-->
+        <activity android:name=".EntryListActivity" />
 <!--        <activity android:name=".JournalSummaryActivity" />-->
 <!--        <activity android:name=".EntryEditActivity" />-->
 <!--        <activity android:name=".SettingsActivity" />-->
