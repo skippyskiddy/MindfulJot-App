@@ -25,6 +25,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.google.firebase.storage.UploadTask;
+
 
 /**
  * Helper class to handle Firebase interactions
@@ -331,14 +333,15 @@ public class FirebaseHelper {
     /**
      * Upload image to Firebase Storage
      */
-    public StorageReference uploadImage(String userId, byte[] imageData) {
-        String imageName = "image_" + new Date().getTime() + ".jpg";
-        StorageReference imageRef = storage.getReference("images")
+    public UploadTask uploadImage(String userId, byte[] imageData) {
+        String imageName = "image_" + System.currentTimeMillis() + ".jpg";
+        StorageReference imageRef = storage.getReference()
+                .child("images")
                 .child(userId)
                 .child(imageName);
 
-        imageRef.putBytes(imageData);
-        return imageRef;
+        // Return the UploadTask so the caller can add listeners
+        return imageRef.putBytes(imageData);
     }
 
     /**

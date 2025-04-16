@@ -38,11 +38,17 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
-import android.graphics.Bitmap;
+import com.google.android.gms.tasks.Continuation;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import android.util.Log;
 import com.google.firebase.storage.FirebaseStorage;
 import java.io.ByteArrayOutputStream;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -60,8 +66,6 @@ public class JournalSummaryActivity extends AppCompatActivity implements EntryIm
     private static final int MAX_TAGS = 6;
     private static final int REQUEST_SPEECH_INPUT = 100;
     private static final int REQUEST_IMAGE_PERMISSION = 101;
-    private static final int IMAGE_COMPRESSION_QUALITY = 80; // Compression quality (0-100)
-    private static final int MAX_IMAGE_DIMENSION = 1200; // Maximum dimension for images
 
     // Views
     private ImageButton btnBack;
@@ -455,10 +459,28 @@ public class JournalSummaryActivity extends AppCompatActivity implements EntryIm
 
     private void addImage(Uri imageUri) {
         imageUris.add(imageUri);
-        updateImageUI();
 
-        // We'll compress images at upload time instead of storing byte arrays
-        // This reduces memory usage and improves app performance
+        // Convert Uri to byte array for Firebase Storage
+        try {
+            InputStream inputStream = getContentResolver().openInputStream(imageUri);
+            if (inputStream != null) {
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                byte[] buffer = new byte[1024];
+                int len;
+                while ((len = inputStream.read(buffer)) > -1) {
+                    baos.write(buffer, 0, len);
+                }
+                baos.flush();
+                imageBytesList.add(baos.toByteArray());
+                inputStream.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Error processing image", Toast.LENGTH_SHORT).show();
+        }
+
+        // Update UI
+        updateImageUI();
     }
 
     private void updateImageUI() {
@@ -560,19 +582,20 @@ public class JournalSummaryActivity extends AppCompatActivity implements EntryIm
     }
 
     private void uploadImages() {
-        if (imageUris.isEmpty()) {
+        List<String> imageUrls = new ArrayList<>();
+        final int[] uploadCount = {0};
+        final int totalImages = imageBytesList.size();
+
+        // Show progress message
+        Toast.makeText(this, "Uploading images...", Toast.LENGTH_SHORT).show();
+
+        if (imageBytesList.isEmpty()) {
             saveEntryToFirebase();
             return;
         }
 
-        final List<String> imageUrls = new ArrayList<>();
-        final int[] uploadCount = {0};
-        final int totalImages = imageUris.size();
-
-        Toast.makeText(this, "Uploading images...", Toast.LENGTH_SHORT).show();
-
-        for (int i = 0; i < imageUris.size(); i++) {
-            Uri imageUri = imageUris.get(i);
+        for (int i = 0; i < imageBytesList.size(); i++) {
+            byte[] imageData = imageBytesList.get(i);
             final int imageIndex = i;
 
             if (firebaseHelper.getCurrentUser() == null) {
@@ -583,93 +606,50 @@ public class JournalSummaryActivity extends AppCompatActivity implements EntryIm
 
             String userId = firebaseHelper.getCurrentUser().getUid();
 
-            // Create storage reference
+            // Create a simpler storage reference structure
             StorageReference storageRef = FirebaseStorage.getInstance().getReference();
             String filename = "image_" + System.currentTimeMillis() + "_" + imageIndex + ".jpg";
             StorageReference imageRef = storageRef.child("user_images").child(userId).child(filename);
 
-            // Upload process in background thread to avoid blocking UI
-            new Thread(() -> {
-                try {
-                    // Compress the image before uploading
-                    byte[] compressedImageData = compressImage(imageUri);
+            // Log the upload attempt
+            Log.d("JournalSummary", "Attempting to upload image " + (imageIndex + 1) + " to: " + imageRef.getPath());
 
-                    // Upload the compressed image
-                    UploadTask uploadTask = imageRef.putBytes(compressedImageData);
+            // Start upload with clearer error handling
+            UploadTask uploadTask = imageRef.putBytes(imageData);
+            uploadTask
+                    .addOnSuccessListener(taskSnapshot -> {
+                        Log.d("JournalSummary", "Image " + (imageIndex + 1) + " uploaded successfully");
 
-                    // Handle success/failure on the main thread
-                    uploadTask.addOnSuccessListener(taskSnapshot -> {
+                        // Get download URL
                         imageRef.getDownloadUrl().addOnSuccessListener(uri -> {
                             imageUrls.add(uri.toString());
-                            synchronized (uploadCount) {
-                                uploadCount[0]++;
-                                checkIfAllUploadsComplete(uploadCount[0], totalImages, imageUrls);
-                            }
-                        }).addOnFailureListener(e -> {
-                            synchronized (uploadCount) {
-                                uploadCount[0]++;
-                                checkIfAllUploadsComplete(uploadCount[0], totalImages, imageUrls);
-                            }
-                        });
-                    }).addOnFailureListener(e -> {
-                        runOnUiThread(() -> Toast.makeText(JournalSummaryActivity.this,
-                                "Upload failed", Toast.LENGTH_SHORT).show());
+                            Log.d("JournalSummary", "Got download URL: " + uri.toString());
 
-                        synchronized (uploadCount) {
                             uploadCount[0]++;
                             checkIfAllUploadsComplete(uploadCount[0], totalImages, imageUrls);
-                        }
-                    });
+                        }).addOnFailureListener(e -> {
+                            Log.e("JournalSummary", "Failed to get download URL: " + e.getMessage(), e);
+                            uploadCount[0]++;
+                            checkIfAllUploadsComplete(uploadCount[0], totalImages, imageUrls);
+                        });
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e("JournalSummary", "Failed to upload image " + (imageIndex + 1) + ": " + e.getMessage(), e);
+                        // Show more detailed error to help debugging
+                        Toast.makeText(JournalSummaryActivity.this,
+                                "Upload failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
 
-                } catch (Exception e) {
-                    runOnUiThread(() -> Toast.makeText(JournalSummaryActivity.this,
-                            "Error processing image", Toast.LENGTH_SHORT).show());
-
-                    synchronized (uploadCount) {
                         uploadCount[0]++;
                         checkIfAllUploadsComplete(uploadCount[0], totalImages, imageUrls);
-                    }
-                }
-            }).start();
+                    });
         }
-    }
-
-    private byte[] compressImage(Uri imageUri) throws IOException {
-        // Get bitmap from Uri
-        Bitmap originalBitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
-
-        // Calculate scaling to limit dimensions
-        int width = originalBitmap.getWidth();
-        int height = originalBitmap.getHeight();
-        float scaleFactor = 1.0f;
-
-        if (width > height && width > MAX_IMAGE_DIMENSION) {
-            scaleFactor = (float) MAX_IMAGE_DIMENSION / width;
-        } else if (height > MAX_IMAGE_DIMENSION) {
-            scaleFactor = (float) MAX_IMAGE_DIMENSION / height;
-        }
-
-        if (scaleFactor < 1.0f) {
-            width = Math.round(width * scaleFactor);
-            height = Math.round(height * scaleFactor);
-            originalBitmap = Bitmap.createScaledBitmap(originalBitmap, width, height, true);
-        }
-
-        // Compress to JPEG
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        originalBitmap.compress(Bitmap.CompressFormat.JPEG, IMAGE_COMPRESSION_QUALITY, baos);
-
-        // Recycle the bitmap to free memory
-        if (!originalBitmap.isRecycled()) {
-            originalBitmap.recycle();
-        }
-
-        return baos.toByteArray();
     }
 
     private void checkIfAllUploadsComplete(int current, int total, List<String> imageUrls) {
         if (current >= total) {
-            // Save entry with available image URLs
+            Log.d("JournalSummary", "All uploads complete. Successful URLs: " + imageUrls.size() + "/" + total);
+
+            // Save even if some uploads failed
             currentEntry.setImageUrls(imageUrls);
             saveEntryToFirebase();
         }
