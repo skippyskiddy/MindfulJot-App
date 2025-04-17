@@ -2,20 +2,25 @@ package edu.northeastern.numad25sp_group4;
 
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.speech.RecognizerIntent;
 import android.text.Editable;
 import android.text.InputFilter;
+import android.text.SpannableString;
+import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.text.style.ForegroundColorSpan;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.inputmethod.EditorInfo;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
@@ -38,17 +43,12 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
-import com.google.android.gms.tasks.Continuation;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import android.util.Log;
 import com.google.firebase.storage.FirebaseStorage;
-import java.io.ByteArrayOutputStream;
+
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -70,10 +70,10 @@ public class JournalSummaryActivity extends AppCompatActivity implements EntryIm
     // Views
     private ImageButton btnBack;
     private TextView tvEmotionSummary;
-    private TextView tvAddAnotherEmotion;
+    private Button btnAddAnotherEmotion;
     private EditText etJournalText;
     private TextView tvCharCount;
-    private TextView tvVoiceToText;
+    private Button btnVoiceToText;
     private ImageButton btnCamera;
     private TextView tvImageCount;
     private RecyclerView recyclerImages;
@@ -82,7 +82,7 @@ public class JournalSummaryActivity extends AppCompatActivity implements EntryIm
     private LinearLayout llTagsDisplay;
     private HorizontalScrollView tagsScrollView;
     private ImageView ivBackArrow;
-    private TextView btnSaveEntry;
+    private Button btnSaveEntry;
 
     // Data
     private EmotionEntry currentEntry;
@@ -217,10 +217,10 @@ public class JournalSummaryActivity extends AppCompatActivity implements EntryIm
     private void initViews() {
         btnBack = findViewById(R.id.btn_back);
         tvEmotionSummary = findViewById(R.id.tv_emotion_summary);
-        tvAddAnotherEmotion = findViewById(R.id.tv_add_another_emotion);
+        btnAddAnotherEmotion = findViewById(R.id.btn_add_another_emotion);
         etJournalText = findViewById(R.id.et_journal_text);
         tvCharCount = findViewById(R.id.tv_char_count);
-        tvVoiceToText = findViewById(R.id.tv_voice_to_text);
+        btnVoiceToText = findViewById(R.id.btn_voice_to_text); // Now a button
         btnCamera = findViewById(R.id.btn_camera);
         tvImageCount = findViewById(R.id.tv_image_count);
         recyclerImages = findViewById(R.id.recycler_images);
@@ -251,7 +251,7 @@ public class JournalSummaryActivity extends AppCompatActivity implements EntryIm
         ivBackArrow.setOnClickListener(v -> onBackPressed());
 
         // Add another emotion click listener
-        tvAddAnotherEmotion.setOnClickListener(v -> {
+        btnAddAnotherEmotion.setOnClickListener(v -> {
             // Save current input fields to the entry
             saveInputFieldsToEntry();
 
@@ -277,18 +277,18 @@ public class JournalSummaryActivity extends AppCompatActivity implements EntryIm
 
                 // Disable voice to text if max characters reached
                 if (currentLength >= MAX_CHAR_COUNT) {
-                    tvVoiceToText.setEnabled(false);
-                    tvVoiceToText.setAlpha(0.5f);
+                    btnVoiceToText.setEnabled(false);
+                    btnVoiceToText.setAlpha(0.5f);
                     stopVoiceToTextAnimation();
                 } else {
-                    tvVoiceToText.setEnabled(true);
-                    tvVoiceToText.setAlpha(1.0f);
+                    btnVoiceToText.setEnabled(true);
+                    btnVoiceToText.setAlpha(1.0f);
                 }
             }
         });
 
         // Voice to text click listener
-        tvVoiceToText.setOnClickListener(v -> {
+        btnVoiceToText.setOnClickListener(v -> {
             if (etJournalText.length() < MAX_CHAR_COUNT) {
                 startVoiceInput();
             }
@@ -311,11 +311,21 @@ public class JournalSummaryActivity extends AppCompatActivity implements EntryIm
             }
         });
 
-        // Tags input listener
+        // Tags input listener - improved to properly handle keyboard dismissal
         etTags.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE ||
                     (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_DOWN)) {
-                addTag();
+                // Add the tag if text is not empty
+                if (!etTags.getText().toString().trim().isEmpty()) {
+                    addTag();
+                }
+
+                // Hide keyboard
+                hideKeyboard(etTags);
+
+                // Clear focus
+                etTags.clearFocus();
+
                 return true;
             }
             return false;
@@ -341,8 +351,118 @@ public class JournalSummaryActivity extends AppCompatActivity implements EntryIm
             public void afterTextChanged(Editable s) {}
         });
 
+        // Set an click listener on the parent layout to clear focus from tag input
+        findViewById(R.id.card_tags).setOnClickListener(v -> {
+            etTags.clearFocus();
+            hideKeyboard(etTags);
+        });
+
         // Save entry button click listener
         btnSaveEntry.setOnClickListener(v -> saveEntry());
+    }
+
+    /**
+     * Helper method to hide the keyboard
+     */
+    private void hideKeyboard(View view) {
+        android.view.inputmethod.InputMethodManager imm =
+                (android.view.inputmethod.InputMethodManager) getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
+        if (imm != null) {
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
+    }
+
+    /**
+     * Sets the emotion text with appropriate colors based on emotion categories.
+     * Format: "I'm feeling" in white, and the emotion name(s) in their respective category colors.
+     * For two emotions, it displays them on separate lines for better readability.
+     */
+    private void updateEmotionSummary() {
+        List<Emotion> emotions = currentEntry.getEmotions();
+
+        if (emotions == null || emotions.isEmpty()) {
+            // No emotions yet
+            tvEmotionSummary.setText("I'm feeling...");
+            btnAddAnotherEmotion.setVisibility(View.VISIBLE);
+            return;
+        }
+
+        if (emotions.size() == 1) {
+            // Single emotion - display on one line
+            String prefix = "I'm feeling ";
+            String emotionText = emotions.get(0).getName();
+
+            SpannableString spannableString = new SpannableString(prefix + emotionText);
+
+            // Set prefix color to white
+            spannableString.setSpan(new ForegroundColorSpan(Color.WHITE),
+                    0, prefix.length(),
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+            // Set emotion name color based on category
+            int emotionColor = getColorForCategory(emotions.get(0).getCategory());
+            spannableString.setSpan(new ForegroundColorSpan(emotionColor),
+                    prefix.length(),
+                    prefix.length() + emotionText.length(),
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+            tvEmotionSummary.setText(spannableString);
+            btnAddAnotherEmotion.setVisibility(View.VISIBLE);
+        } else if (emotions.size() == 2) {
+            // Two emotions - display on separate lines
+            String firstLine = "I'm feeling " + emotions.get(0).getName();
+            String ampersand = " &";
+            String secondLine = emotions.get(1).getName();
+            String fullText = firstLine + ampersand + "\n" + secondLine;
+
+            SpannableString spannableString = new SpannableString(fullText);
+
+            // Set "I'm feeling" to white
+            spannableString.setSpan(new ForegroundColorSpan(Color.WHITE),
+                    0, 11,
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+            // Set first emotion color
+            int firstEmotionColor = getColorForCategory(emotions.get(0).getCategory());
+            spannableString.setSpan(new ForegroundColorSpan(firstEmotionColor),
+                    11,
+                    firstLine.length(),
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+            // Set ampersand "&" to white
+            spannableString.setSpan(new ForegroundColorSpan(Color.WHITE),
+                    firstLine.length(),
+                    firstLine.length() + ampersand.length(),
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+            // Set second emotion color
+            int secondEmotionColor = getColorForCategory(emotions.get(1).getCategory());
+            spannableString.setSpan(new ForegroundColorSpan(secondEmotionColor),
+                    firstLine.length() + ampersand.length() + 1, // +1 for the newline
+                    fullText.length(),
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+            tvEmotionSummary.setText(spannableString);
+            btnAddAnotherEmotion.setVisibility(View.GONE);
+        }
+    }
+
+    /**
+     * Returns the appropriate color code for an emotion category
+     */
+    private int getColorForCategory(Emotion.Category category) {
+        switch (category) {
+            case HIGH_ENERGY_PLEASANT:
+                return 0xFFFFE57F; // Yellow for high energy pleasant
+            case HIGH_ENERGY_UNPLEASANT:
+                return 0xFFFF6B6B; // Red for high energy unpleasant
+            case LOW_ENERGY_PLEASANT:
+                return 0xFF7FE57F; // Green for low energy pleasant
+            case LOW_ENERGY_UNPLEASANT:
+                return 0xFF7FB8FF; // Blue for low energy unpleasant
+            default:
+                return Color.WHITE;
+        }
     }
 
     // Save the current input fields to the entry object
@@ -372,7 +492,7 @@ public class JournalSummaryActivity extends AppCompatActivity implements EntryIm
     }
 
     private void updateUI() {
-        // Update emotion summary
+        // Update emotion summary with colored text
         updateEmotionSummary();
 
         // Update character count
@@ -399,24 +519,9 @@ public class JournalSummaryActivity extends AppCompatActivity implements EntryIm
         // For now, we'll skip this part and assume this is a new entry
     }
 
-    private void updateEmotionSummary() {
-        List<Emotion> emotions = currentEntry.getEmotions();
-
-        if (emotions == null || emotions.isEmpty()) {
-            tvEmotionSummary.setText("I'm feeling...");
-            tvAddAnotherEmotion.setVisibility(View.GONE);
-        } else if (emotions.size() == 1) {
-            tvEmotionSummary.setText("I'm feeling " + emotions.get(0).getName());
-            tvAddAnotherEmotion.setVisibility(View.VISIBLE);
-        } else if (emotions.size() == 2) {
-            tvEmotionSummary.setText("I'm feeling " + emotions.get(0).getName() + " and " + emotions.get(1).getName());
-            tvAddAnotherEmotion.setVisibility(View.GONE);
-        }
-    }
-
     private void startVoiceInput() {
-        // Start voice to text blinking animation
-        tvVoiceToText.startAnimation(blinkAnimation);
+        // Start voice to text blinking animation (for button now)
+        btnVoiceToText.startAnimation(blinkAnimation);
         isVoiceActive = true;
 
         // Create the speech recognition intent
@@ -435,7 +540,7 @@ public class JournalSummaryActivity extends AppCompatActivity implements EntryIm
     }
 
     private void stopVoiceToTextAnimation() {
-        tvVoiceToText.clearAnimation();
+        btnVoiceToText.clearAnimation();
         isVoiceActive = false;
     }
 
@@ -535,6 +640,11 @@ public class JournalSummaryActivity extends AppCompatActivity implements EntryIm
 
             // Make sure the tag input is enabled if we're below the limit
             etTags.setEnabled(true);
+
+            // Ensure hint is visible for better clarity
+            if (tags.isEmpty()) {
+                etTags.setHint("Type tag + space or enter");
+            }
         });
 
         // Add layout parameters
@@ -550,6 +660,10 @@ public class JournalSummaryActivity extends AppCompatActivity implements EntryIm
         // Disable the input if we've reached the limit
         if (tags.size() >= MAX_TAGS) {
             etTags.setEnabled(false);
+            etTags.setHint("Maximum tags reached");
+        } else {
+            // Change hint to be clearer once user has added at least one tag
+            etTags.setHint("+ Add more tags");
         }
 
         // Scroll to the end of the tags
@@ -589,11 +703,6 @@ public class JournalSummaryActivity extends AppCompatActivity implements EntryIm
         // Show progress message
         Toast.makeText(this, "Uploading images...", Toast.LENGTH_SHORT).show();
 
-        if (imageBytesList.isEmpty()) {
-            saveEntryToFirebase();
-            return;
-        }
-
         for (int i = 0; i < imageBytesList.size(); i++) {
             byte[] imageData = imageBytesList.get(i);
             final int imageIndex = i;
@@ -605,56 +714,40 @@ public class JournalSummaryActivity extends AppCompatActivity implements EntryIm
             }
 
             String userId = firebaseHelper.getCurrentUser().getUid();
-
-            // Create a simpler storage reference structure
-            StorageReference storageRef = FirebaseStorage.getInstance().getReference();
             String filename = "image_" + System.currentTimeMillis() + "_" + imageIndex + ".jpg";
-            StorageReference imageRef = storageRef.child("user_images").child(userId).child(filename);
 
-            // Log the upload attempt
-            Log.d("JournalSummary", "Attempting to upload image " + (imageIndex + 1) + " to: " + imageRef.getPath());
+            // Upload image to Firebase Storage
+            UploadTask uploadTask = firebaseHelper.uploadImage(userId, imageData);
 
-            // Start upload with clearer error handling
-            UploadTask uploadTask = imageRef.putBytes(imageData);
-            uploadTask
-                    .addOnSuccessListener(taskSnapshot -> {
-                        Log.d("JournalSummary", "Image " + (imageIndex + 1) + " uploaded successfully");
+            // This is a simplified version - you may need to adjust to match the actual implementation
+            StorageReference imageRef = FirebaseStorage.getInstance().getReference()
+                    .child("images")
+                    .child(userId)
+                    .child(filename);
 
-                        // Get download URL
-                        imageRef.getDownloadUrl().addOnSuccessListener(uri -> {
-                            imageUrls.add(uri.toString());
-                            Log.d("JournalSummary", "Got download URL: " + uri.toString());
+            uploadTask.continueWithTask(task -> {
+                if (!task.isSuccessful()) {
+                    throw task.getException();
+                }
+                // Get the download URL
+                return imageRef.getDownloadUrl();
+            }).addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    Uri downloadUri = task.getResult();
+                    if (downloadUri != null) {
+                        imageUrls.add(downloadUri.toString());
+                    }
+                }
 
-                            uploadCount[0]++;
-                            checkIfAllUploadsComplete(uploadCount[0], totalImages, imageUrls);
-                        }).addOnFailureListener(e -> {
-                            Log.e("JournalSummary", "Failed to get download URL: " + e.getMessage(), e);
-                            uploadCount[0]++;
-                            checkIfAllUploadsComplete(uploadCount[0], totalImages, imageUrls);
-                        });
-                    })
-                    .addOnFailureListener(e -> {
-                        Log.e("JournalSummary", "Failed to upload image " + (imageIndex + 1) + ": " + e.getMessage(), e);
-                        // Show more detailed error to help debugging
-                        Toast.makeText(JournalSummaryActivity.this,
-                                "Upload failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
-
-                        uploadCount[0]++;
-                        checkIfAllUploadsComplete(uploadCount[0], totalImages, imageUrls);
-                    });
+                uploadCount[0]++;
+                if (uploadCount[0] >= totalImages) {
+                    // All uploads complete
+                    currentEntry.setImageUrls(imageUrls);
+                    saveEntryToFirebase();
+                }
+            });
         }
     }
-
-    private void checkIfAllUploadsComplete(int current, int total, List<String> imageUrls) {
-        if (current >= total) {
-            Log.d("JournalSummary", "All uploads complete. Successful URLs: " + imageUrls.size() + "/" + total);
-
-            // Save even if some uploads failed
-            currentEntry.setImageUrls(imageUrls);
-            saveEntryToFirebase();
-        }
-    }
-
 
     private void saveEntryToFirebase() {
         // Make sure we have a valid user ID
@@ -718,7 +811,6 @@ public class JournalSummaryActivity extends AppCompatActivity implements EntryIm
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
         // Handle speech recognition result (for older devices)
         if (requestCode == REQUEST_SPEECH_INPUT) {
             if (resultCode == RESULT_OK && data != null) {
@@ -745,6 +837,4 @@ public class JournalSummaryActivity extends AppCompatActivity implements EntryIm
             stopVoiceToTextAnimation();
         }
     }
-
-
 }

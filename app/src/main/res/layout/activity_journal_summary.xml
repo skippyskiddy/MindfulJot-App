@@ -21,22 +21,36 @@
         app:layout_constraintTop_toTopOf="parent"
         app:tint="@color/white" />
 
-    <!-- Title Text -->
+    <!-- Emotion Text (replaces title and card) -->
     <TextView
-        android:id="@+id/tv_title"
+        android:id="@+id/tv_emotion_summary"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
         android:layout_marginStart="24dp"
-        android:layout_marginTop="24dp"
         android:layout_marginEnd="24dp"
-        android:text="Journal Entry"
-        android:textAlignment="center"
+        android:text="I'm feeling Excited"
         android:textColor="@color/white"
-        android:textSize="22sp"
+        android:textSize="30sp"
         android:textStyle="bold"
+        android:gravity="center"
+        android:lineSpacingExtra="4dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/btn_back" />
+
+    <!-- Add another emotion button -->
+    <Button
+        android:id="@+id/btn_add_another_emotion"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="Add another emotion"
+        android:textColor="@color/white"
+        android:backgroundTint="#555555"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_emotion_summary" />
 
     <!-- ScrollView to handle content if it exceeds screen size -->
     <ScrollView
@@ -45,58 +59,17 @@
         android:layout_marginTop="16dp"
         android:layout_marginBottom="16dp"
         android:clipToPadding="false"
-        android:paddingBottom="24dp"
+        android:paddingBottom="100dp"
+        android:fillViewport="true"
         app:layout_constraintBottom_toTopOf="@+id/btn_save_entry"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tv_title">
+        app:layout_constraintTop_toBottomOf="@+id/btn_add_another_emotion">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
-
-            <!-- Card 1: Emotion Summary -->
-            <androidx.cardview.widget.CardView
-                android:id="@+id/card_emotion_summary"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="24dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="24dp"
-                app:cardBackgroundColor="@color/card_background"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp">
-
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:padding="16dp">
-
-                    <TextView
-                        android:id="@+id/tv_emotion_summary"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="I'm feeling Excited"
-                        android:textColor="@color/white"
-                        android:textSize="18sp"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
-
-                    <TextView
-                        android:id="@+id/tv_add_another_emotion"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:text="add another emotion"
-                        android:textColor="@color/accent"
-                        android:textSize="14sp"
-                        app:layout_constraintBottom_toBottomOf="@+id/tv_emotion_summary"
-                        app:layout_constraintStart_toEndOf="@+id/tv_emotion_summary"
-                        app:layout_constraintTop_toTopOf="@+id/tv_emotion_summary" />
-                </androidx.constraintlayout.widget.ConstraintLayout>
-            </androidx.cardview.widget.CardView>
 
             <!-- Card 2: Journal Text Entry -->
             <androidx.cardview.widget.CardView
@@ -154,14 +127,14 @@
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@+id/et_journal_text" />
 
-                    <TextView
-                        android:id="@+id/tv_voice_to_text"
+                    <Button
+                        android:id="@+id/btn_voice_to_text"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="voice to text"
-                        android:textColor="@color/accent"
-                        android:textSize="14sp"
+                        android:text="Voice to text"
+                        android:textColor="@color/white"
+                        android:backgroundTint="#555555"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintTop_toBottomOf="@+id/et_journal_text" />
 
@@ -173,7 +146,7 @@
                         android:orientation="horizontal"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@+id/tv_voice_to_text">
+                        app:layout_constraintTop_toBottomOf="@+id/btn_voice_to_text">
 
                         <ImageButton
                             android:id="@+id/btn_camera"
@@ -181,7 +154,7 @@
                             android:layout_height="48dp"
                             android:background="?attr/selectableItemBackgroundBorderless"
                             android:contentDescription="Add Images"
-                            android:src="@drawable/ic_add"
+                            android:src="@android:drawable/ic_menu_camera"
                             app:tint="@color/white" />
 
                         <TextView
@@ -231,7 +204,7 @@
                         android:id="@+id/tv_tags_prompt"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Tags"
+                        android:text="Tags (add up to 6 tags)"
                         android:textColor="@color/white"
                         android:textSize="16sp"
                         app:layout_constraintStart_toStartOf="parent"
@@ -272,12 +245,13 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:background="@null"
-                            android:hint="Add tags..."
+                            android:hint="Type tag + space or enter"
                             android:inputType="text"
-                            android:minWidth="100dp"
+                            android:minWidth="150dp"
                             android:textColor="@color/white"
                             android:textColorHint="@color/gray"
                             android:textSize="14sp"
+                            android:imeOptions="actionDone"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintTop_toTopOf="parent" />
@@ -289,6 +263,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
+                        android:minHeight="50dp"
                         android:orientation="vertical"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
