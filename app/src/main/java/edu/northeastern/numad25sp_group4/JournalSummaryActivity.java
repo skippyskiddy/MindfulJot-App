@@ -6,7 +6,9 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
+import android.speech.SpeechRecognizer;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.SpannableString;
@@ -19,6 +21,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
+import android.view.animation.ScaleAnimation;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
@@ -34,7 +37,7 @@ import android.Manifest;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -45,7 +48,6 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.google.firebase.storage.FirebaseStorage;
 
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -53,6 +55,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+
+import android.os.Handler;
+import android.os.Looper;
 
 import adapters.EntryImageAdapter;
 import models.Emotion;
@@ -64,11 +69,10 @@ public class JournalSummaryActivity extends AppCompatActivity implements EntryIm
     private static final int MAX_CHAR_COUNT = 500;
     private static final int MAX_IMAGES = 3;
     private static final int MAX_TAGS = 6;
-    private static final int REQUEST_SPEECH_INPUT = 100;
     private static final int REQUEST_IMAGE_PERMISSION = 101;
+    private static final int REQUEST_SPEECH_PERMISSION = 102;
 
     // Views
-    private ImageButton btnBack;
     private TextView tvEmotionSummary;
     private Button btnAddAnotherEmotion;
     private EditText etJournalText;
@@ -91,8 +95,17 @@ public class JournalSummaryActivity extends AppCompatActivity implements EntryIm
     private List<byte[]> imageBytesList = new ArrayList<>();
     private FirebaseHelper firebaseHelper;
     private EntryImageAdapter imageAdapter;
-    private Animation blinkAnimation;
-    private boolean isVoiceActive = false;
+
+    // Voice recognition
+    private SpeechRecognizer speechRecognizer;
+    private boolean isListening = false;
+    private boolean isPaused = false;
+    private AlertDialog voiceDialog = null;
+    private StringBuilder currentSessionText = new StringBuilder();
+    private int availableCharacters = MAX_CHAR_COUNT;
+    private Animation pulseAnimation;
+    private Handler recognitionHandler = new Handler(Looper.getMainLooper());
+    private Runnable restartRecognitionRunnable;
 
     // Activity Result Launchers
     private final ActivityResultLauncher<Intent> imagePickerLauncher =
@@ -107,32 +120,6 @@ public class JournalSummaryActivity extends AppCompatActivity implements EntryIm
                         }
                     }
                 }
-            });
-
-    private final ActivityResultLauncher<Intent> speechRecognizerLauncher =
-            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
-                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-                    ArrayList<String> speechResults = result.getData()
-                            .getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
-                    if (speechResults != null && !speechResults.isEmpty()) {
-                        String currentText = etJournalText.getText().toString();
-                        String recognizedText = speechResults.get(0);
-
-                        // Make sure we don't exceed the character limit
-                        int availableChars = MAX_CHAR_COUNT - currentText.length();
-                        if (recognizedText.length() > availableChars) {
-                            recognizedText = recognizedText.substring(0, availableChars);
-                        }
-
-                        // Append the recognized text
-                        if (!currentText.isEmpty() && !currentText.endsWith(" ")) {
-                            currentText += " ";
-                        }
-                        etJournalText.setText(currentText + recognizedText);
-                        etJournalText.setSelection(etJournalText.getText().length());
-                    }
-                }
-                stopVoiceToTextAnimation();
             });
 
     @Override
@@ -163,6 +150,39 @@ public class JournalSummaryActivity extends AppCompatActivity implements EntryIm
 
         // Update UI with current entry data
         updateUI();
+
+        // Initialize speech recognizer
+        if (SpeechRecognizer.isRecognitionAvailable(this)) {
+            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
+            setupSpeechRecognizer();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Initialize speech recognizer if needed
+        if (speechRecognizer == null && SpeechRecognizer.isRecognitionAvailable(this)) {
+            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
+            setupSpeechRecognizer();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // Stop listening and release resources
+        stopVoiceRecognition();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Clean up speech recognizer
+        if (speechRecognizer != null) {
+            speechRecognizer.destroy();
+            speechRecognizer = null;
+        }
     }
 
     private void initEmotionEntry() {
@@ -219,7 +239,7 @@ public class JournalSummaryActivity extends AppCompatActivity implements EntryIm
         btnAddAnotherEmotion = findViewById(R.id.btn_add_another_emotion);
         etJournalText = findViewById(R.id.et_journal_text);
         tvCharCount = findViewById(R.id.tv_char_count);
-        btnVoiceToText = findViewById(R.id.btn_voice_to_text); // Now a button
+        btnVoiceToText = findViewById(R.id.btn_voice_to_text);
         btnCamera = findViewById(R.id.btn_camera);
         tvImageCount = findViewById(R.id.tv_image_count);
         recyclerImages = findViewById(R.id.recycler_images);
@@ -235,11 +255,15 @@ public class JournalSummaryActivity extends AppCompatActivity implements EntryIm
     }
 
     private void setupAnimations() {
-        // Create blinking animation for voice to text
-        blinkAnimation = new AlphaAnimation(1.0f, 0.3f);
-        blinkAnimation.setDuration(500);
-        blinkAnimation.setRepeatCount(Animation.INFINITE);
-        blinkAnimation.setRepeatMode(Animation.REVERSE);
+        // Create pulsing animation for mic icon
+        pulseAnimation = new ScaleAnimation(
+                1f, 1.2f, // Start and end X scale
+                1f, 1.2f, // Start and end Y scale
+                Animation.RELATIVE_TO_SELF, 0.5f, // Pivot X
+                Animation.RELATIVE_TO_SELF, 0.5f); // Pivot Y
+        pulseAnimation.setDuration(800);
+        pulseAnimation.setRepeatCount(Animation.INFINITE);
+        pulseAnimation.setRepeatMode(Animation.REVERSE);
     }
 
     private void setupListeners() {
@@ -275,7 +299,6 @@ public class JournalSummaryActivity extends AppCompatActivity implements EntryIm
                 if (currentLength >= MAX_CHAR_COUNT) {
                     btnVoiceToText.setEnabled(false);
                     btnVoiceToText.setAlpha(0.5f);
-                    stopVoiceToTextAnimation();
                 } else {
                     btnVoiceToText.setEnabled(true);
                     btnVoiceToText.setAlpha(1.0f);
@@ -286,7 +309,13 @@ public class JournalSummaryActivity extends AppCompatActivity implements EntryIm
         // Voice to text click listener
         btnVoiceToText.setOnClickListener(v -> {
             if (etJournalText.length() < MAX_CHAR_COUNT) {
-                startVoiceInput();
+                if (!isListening) {
+                    startVoiceRecognition();
+                } else {
+                    stopVoiceRecognition();
+                }
+            } else {
+                Toast.makeText(this, "Character limit reached", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -355,6 +384,485 @@ public class JournalSummaryActivity extends AppCompatActivity implements EntryIm
 
         // Save entry button click listener
         btnSaveEntry.setOnClickListener(v -> saveEntry());
+    }
+
+    /**
+     * Sets up the speech recognizer with recognition listener
+     */
+    private void setupSpeechRecognizer() {
+        if (speechRecognizer != null) {
+            speechRecognizer.setRecognitionListener(new RecognitionListener() {
+                @Override
+                public void onReadyForSpeech(Bundle params) {
+                    isListening = true;
+                    if (voiceDialog != null) {
+                        TextView statusView = voiceDialog.findViewById(R.id.tv_listening_status);
+                        if (statusView != null) {
+                            statusView.setText("Listening...");
+                        }
+                    }
+                }
+
+                @Override
+                public void onBeginningOfSpeech() {
+                    // User started speaking
+                    if (voiceDialog != null) {
+                        TextView statusView = voiceDialog.findViewById(R.id.tv_listening_status);
+                        if (statusView != null) {
+                            statusView.setText("Hearing you...");
+                        }
+                    }
+                }
+
+                @Override
+                public void onRmsChanged(float rmsdB) {
+                    // Could use this to show a volume meter
+                }
+
+                @Override
+                public void onBufferReceived(byte[] buffer) {
+                    // Not needed for our implementation
+                }
+
+                @Override
+                public void onEndOfSpeech() {
+                    isListening = false;
+                    if (voiceDialog != null) {
+                        TextView statusView = voiceDialog.findViewById(R.id.tv_listening_status);
+                        if (statusView != null) {
+                            statusView.setText("Processing...");
+                        }
+                    }
+                }
+
+                @Override
+                public void onError(int error) {
+                    isListening = false;
+
+                    if (voiceDialog == null || !voiceDialog.isShowing() || isPaused) {
+                        return;
+                    }
+
+                    TextView statusView = voiceDialog.findViewById(R.id.tv_listening_status);
+
+                    switch (error) {
+                        case SpeechRecognizer.ERROR_NO_MATCH:
+                        case SpeechRecognizer.ERROR_SPEECH_TIMEOUT:
+                            // No speech detected, just restart
+                            if (statusView != null) {
+                                statusView.setText("Didn't catch that. Please try again.");
+                            }
+                            // Restart recognition after a short delay
+                            if (!isPaused) {
+                                recognitionHandler.postDelayed(restartRecognitionRunnable, 1000);
+                            }
+                            break;
+
+                        case SpeechRecognizer.ERROR_NETWORK:
+                        case SpeechRecognizer.ERROR_NETWORK_TIMEOUT:
+                            if (statusView != null) {
+                                statusView.setText("Network error. Please check your connection.");
+                            }
+                            // Restart after a longer delay
+                            if (!isPaused) {
+                                recognitionHandler.postDelayed(restartRecognitionRunnable, 3000);
+                            }
+                            break;
+
+                        case SpeechRecognizer.ERROR_CLIENT:
+                        case SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS:
+                        case SpeechRecognizer.ERROR_RECOGNIZER_BUSY:
+                            if (statusView != null) {
+                                statusView.setText("Recognition error. Restarting...");
+                            }
+                            // Wait a bit and restart
+                            if (!isPaused) {
+                                recognitionHandler.postDelayed(restartRecognitionRunnable, 1000);
+                            }
+                            break;
+
+                        default:
+                            if (statusView != null) {
+                                statusView.setText("Error occurred. Restarting...");
+                            }
+                            // Generic error, restart after a short delay
+                            if (!isPaused) {
+                                recognitionHandler.postDelayed(restartRecognitionRunnable, 1000);
+                            }
+                            break;
+                    }
+                }
+
+                @Override
+                public void onResults(Bundle results) {
+                    isListening = false;
+
+                    if (voiceDialog == null || !voiceDialog.isShowing() || isPaused) {
+                        return;
+                    }
+
+                    ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+
+                    if (matches != null && !matches.isEmpty()) {
+                        String recognizedText = matches.get(0);
+
+                        // Get UI references
+                        TextView statusView = voiceDialog.findViewById(R.id.tv_listening_status);
+                        TextView previewView = voiceDialog.findViewById(R.id.tv_recognition_preview);
+                        TextView charCountView = voiceDialog.findViewById(R.id.tv_dialog_char_count);
+
+                        // Add recognized text to the currentSessionText
+                        if (availableCharacters > 0) {
+                            // Add space if needed between segments
+                            if (currentSessionText.length() > 0 &&
+                                    !currentSessionText.toString().endsWith(" ") &&
+                                    !currentSessionText.toString().endsWith("\n") &&
+                                    !recognizedText.isEmpty()) {
+                                currentSessionText.append(" ");
+                            }
+
+                            // Trim recognized text if needed
+                            if (recognizedText.length() > availableCharacters) {
+                                recognizedText = recognizedText.substring(0, availableCharacters);
+                            }
+
+                            // Append to current session text
+                            currentSessionText.append(recognizedText);
+
+                            // Show in preview
+                            if (previewView != null) {
+                                previewView.setText(currentSessionText.toString());
+                            }
+
+                            // Update character count
+                            availableCharacters = MAX_CHAR_COUNT -
+                                    (etJournalText.getText().length() + currentSessionText.length());
+
+                            if (charCountView != null) {
+                                charCountView.setText(availableCharacters + "/" + MAX_CHAR_COUNT + " characters available");
+                            }
+
+                            // Show successful transcription feedback briefly
+                            if (statusView != null) {
+                                statusView.setText("Recognized: \"" + recognizedText + "\"");
+                            }
+
+                            // If we still have characters and not paused, continue listening
+                            if (availableCharacters > 0 && !isPaused) {
+                                // Start next recognition after a short delay
+                                recognitionHandler.postDelayed(restartRecognitionRunnable, 1000);
+                            } else if (availableCharacters <= 0) {
+                                // No characters left
+                                if (statusView != null) {
+                                    statusView.setText("Character limit reached");
+                                }
+                                TextView promptView = voiceDialog.findViewById(R.id.tv_voice_prompt);
+                                if (promptView != null) {
+                                    promptView.setText("Tap 'Done' to apply text");
+                                }
+
+                                // Stop animations
+                                ImageView micIcon = voiceDialog.findViewById(R.id.iv_mic_icon);
+                                if (micIcon != null) {
+                                    micIcon.clearAnimation();
+                                }
+
+                                // Update pause button text
+                                updatePauseButtonText(true);
+                                isPaused = true;
+                            }
+                        } else {
+                            // No characters left
+                            if (statusView != null) {
+                                statusView.setText("Character limit reached");
+                            }
+                            TextView promptView = voiceDialog.findViewById(R.id.tv_voice_prompt);
+                            if (promptView != null) {
+                                promptView.setText("Tap 'Done' to apply text");
+                            }
+
+                            // Stop animations
+                            ImageView micIcon = voiceDialog.findViewById(R.id.iv_mic_icon);
+                            if (micIcon != null) {
+                                micIcon.clearAnimation();
+                            }
+
+                            // Update pause button text
+                            updatePauseButtonText(true);
+                            isPaused = true;
+                        }
+                    } else {
+                        // No results, restart if not paused
+                        TextView statusView = voiceDialog.findViewById(R.id.tv_listening_status);
+                        if (statusView != null) {
+                            statusView.setText("No speech detected. Please try again.");
+                        }
+
+                        if (!isPaused) {
+                            recognitionHandler.postDelayed(restartRecognitionRunnable, 1000);
+                        }
+                    }
+                }
+
+                @Override
+                public void onPartialResults(Bundle partialResults) {
+                    // We could show partial results here if desired
+                    // For now, we'll just wait for final results
+                }
+
+                @Override
+                public void onEvent(int eventType, Bundle params) {
+                    // Not used in this implementation
+                }
+            });
+
+            // Create the runnable for restarting recognition
+            restartRecognitionRunnable = () -> {
+                if (isListening || isPaused || voiceDialog == null || !voiceDialog.isShowing()) {
+                    return;
+                }
+
+                startListening();
+            };
+        }
+    }
+
+    /**
+     * Starts speech recognition and shows the dialog
+     */
+    private void startVoiceRecognition() {
+        // Check permission
+        if (!checkVoicePermission()) {
+            return;
+        }
+
+        // Reset state
+        currentSessionText.setLength(0);
+        isPaused = false;
+        availableCharacters = MAX_CHAR_COUNT - etJournalText.getText().length();
+
+        if (availableCharacters <= 0) {
+            Toast.makeText(this, "Character limit reached", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Create and show dialog
+        showVoiceRecognitionDialog();
+
+        // Start listening
+        startListening();
+    }
+
+    /**
+     * Shows the voice recognition dialog
+     */
+    private void showVoiceRecognitionDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_voice_input, null);
+        builder.setView(dialogView);
+
+        // Get references to dialog views
+        TextView tvTitle = dialogView.findViewById(R.id.tv_voice_title);
+        ImageView ivMic = dialogView.findViewById(R.id.iv_mic_icon);
+        TextView tvListeningStatus = dialogView.findViewById(R.id.tv_listening_status);
+        TextView tvRecognitionPreview = dialogView.findViewById(R.id.tv_recognition_preview);
+        TextView tvPrompt = dialogView.findViewById(R.id.tv_voice_prompt);
+        TextView tvCharCount = dialogView.findViewById(R.id.tv_dialog_char_count);
+        Button btnPauseResume = dialogView.findViewById(R.id.btn_pause_resume_listening);
+        Button btnStop = dialogView.findViewById(R.id.btn_stop_listening);
+
+        // Update character count
+        tvCharCount.setText(availableCharacters + "/" + MAX_CHAR_COUNT + " characters available");
+
+        // Create and show dialog
+        voiceDialog = builder.create();
+        voiceDialog.setCancelable(false);
+        voiceDialog.show();
+
+        // Start animations to indicate active listening
+        ivMic.startAnimation(pulseAnimation);
+
+        // Setup button actions
+        btnPauseResume.setOnClickListener(v -> togglePauseState());
+
+        btnStop.setOnClickListener(v -> applyRecognizedTextAndClose());
+    }
+
+    /**
+     * Starts the speech recognition
+     */
+    private void startListening() {
+        if (speechRecognizer == null || isListening) {
+            return;
+        }
+
+        // Update UI to show we're listening
+        if (voiceDialog != null) {
+            TextView statusView = voiceDialog.findViewById(R.id.tv_listening_status);
+            if (statusView != null) {
+                statusView.setText("Listening...");
+            }
+
+            TextView promptView = voiceDialog.findViewById(R.id.tv_voice_prompt);
+            if (promptView != null) {
+                promptView.setText("Speak now. Tap 'Pause' to pause or 'Done' when finished.");
+            }
+
+            ImageView micIcon = voiceDialog.findViewById(R.id.iv_mic_icon);
+            if (micIcon != null) {
+                micIcon.startAnimation(pulseAnimation);
+            }
+
+            // Update available character count
+            TextView charCountView = voiceDialog.findViewById(R.id.tv_dialog_char_count);
+            if (charCountView != null) {
+                availableCharacters = MAX_CHAR_COUNT - (etJournalText.getText().length() + currentSessionText.length());
+                charCountView.setText(availableCharacters + "/" + MAX_CHAR_COUNT + " characters available");
+            }
+        }
+
+        // Create and configure recognition intent
+        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+        intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
+        intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
+
+        // Start recognizing
+        try {
+            speechRecognizer.startListening(intent);
+            isListening = true;
+        } catch (Exception e) {
+            Toast.makeText(this, "Error starting speech recognition", Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Stops speech recognition
+     */
+    private void stopVoiceRecognition() {
+        // Cancel any pending recognition restarts
+        recognitionHandler.removeCallbacks(restartRecognitionRunnable);
+
+        // Stop speech recognizer if active
+        if (speechRecognizer != null && isListening) {
+            speechRecognizer.stopListening();
+            isListening = false;
+        }
+
+        // Close dialog if open
+        if (voiceDialog != null && voiceDialog.isShowing()) {
+            voiceDialog.dismiss();
+            voiceDialog = null;
+        }
+
+        // Reset state
+        isPaused = false;
+    }
+
+    /**
+     * Apply recognized text to the journal entry field and close the dialog
+     */
+    private void applyRecognizedTextAndClose() {
+        if (currentSessionText.length() > 0) {
+            // Get current text
+            String currentText = etJournalText.getText().toString();
+
+            // Add space if needed
+            if (!currentText.isEmpty() && !currentText.endsWith(" ") && !currentText.endsWith("\n")) {
+                currentText += " ";
+            }
+
+            // Combine with recognized text
+            String combinedText = currentText + currentSessionText.toString();
+
+            // Ensure we don't exceed max length
+            if (combinedText.length() > MAX_CHAR_COUNT) {
+                combinedText = combinedText.substring(0, MAX_CHAR_COUNT);
+                Toast.makeText(this, "Text truncated to character limit", Toast.LENGTH_SHORT).show();
+            }
+
+            // Set the complete text back to the main field
+            etJournalText.setText(combinedText);
+            etJournalText.setSelection(etJournalText.getText().length());
+        }
+
+        // Stop recognition and close dialog
+        stopVoiceRecognition();
+    }
+
+    /**
+     * Toggle between paused and active listening states
+     */
+    private void togglePauseState() {
+        isPaused = !isPaused;
+
+        if (voiceDialog != null && voiceDialog.isShowing()) {
+            // Update UI for paused/resume state
+            updatePauseButtonText(isPaused);
+
+            ImageView ivMic = voiceDialog.findViewById(R.id.iv_mic_icon);
+            TextView tvStatus = voiceDialog.findViewById(R.id.tv_listening_status);
+
+            if (isPaused) {
+                // Update UI for paused state
+                if (isListening) {
+                    speechRecognizer.stopListening();
+                    isListening = false;
+                }
+
+                if (ivMic != null) {
+                    ivMic.clearAnimation();
+                }
+
+                if (tvStatus != null) {
+                    tvStatus.setText("Paused");
+                }
+
+                // Cancel any pending recognition restarts
+                recognitionHandler.removeCallbacks(restartRecognitionRunnable);
+            } else {
+                // Update UI for active listening
+                if (ivMic != null) {
+                    ivMic.startAnimation(pulseAnimation);
+                }
+
+                if (tvStatus != null) {
+                    tvStatus.setText("Listening...");
+                }
+
+                // Restart listening
+                startListening();
+            }
+        }
+    }
+
+    /**
+     * Update the pause/resume button text
+     */
+    private void updatePauseButtonText(boolean paused) {
+        if (voiceDialog != null && voiceDialog.isShowing()) {
+            Button btnPauseResume = voiceDialog.findViewById(R.id.btn_pause_resume_listening);
+            if (btnPauseResume != null) {
+                btnPauseResume.setText(paused ? "Resume" : "Pause");
+            }
+        }
+    }
+
+    /**
+     * Check if we have permission for the microphone
+     */
+    private boolean checkVoicePermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.RECORD_AUDIO},
+                    REQUEST_SPEECH_PERMISSION);
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -513,31 +1021,6 @@ public class JournalSummaryActivity extends AppCompatActivity implements EntryIm
         // Add any existing images (if editing)
         // This would require loading the images from Firebase Storage
         // For now, we'll skip this part and assume this is a new entry
-    }
-
-    private void startVoiceInput() {
-        // Start voice to text blinking animation (for button now)
-        btnVoiceToText.startAnimation(blinkAnimation);
-        isVoiceActive = true;
-
-        // Create the speech recognition intent
-        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
-        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak now...");
-
-        // Start the activity for result
-        try {
-            speechRecognizerLauncher.launch(intent);
-        } catch (Exception e) {
-            Toast.makeText(this, "Speech recognition not supported on this device", Toast.LENGTH_SHORT).show();
-            stopVoiceToTextAnimation();
-        }
-    }
-
-    private void stopVoiceToTextAnimation() {
-        btnVoiceToText.clearAnimation();
-        isVoiceActive = false;
     }
 
     private void openImagePicker() {
@@ -801,36 +1284,12 @@ public class JournalSummaryActivity extends AppCompatActivity implements EntryIm
             } else {
                 Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show();
             }
-        }
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        // Handle speech recognition result (for older devices)
-        if (requestCode == REQUEST_SPEECH_INPUT) {
-            if (resultCode == RESULT_OK && data != null) {
-                ArrayList<String> speechResults = data
-                        .getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
-                if (speechResults != null && !speechResults.isEmpty()) {
-                    String currentText = etJournalText.getText().toString();
-                    String recognizedText = speechResults.get(0);
-
-                    // Make sure we don't exceed the character limit
-                    int availableChars = MAX_CHAR_COUNT - currentText.length();
-                    if (recognizedText.length() > availableChars) {
-                        recognizedText = recognizedText.substring(0, availableChars);
-                    }
-
-                    // Append the recognized text
-                    if (!currentText.isEmpty() && !currentText.endsWith(" ")) {
-                        currentText += " ";
-                    }
-                    etJournalText.setText(currentText + recognizedText);
-                    etJournalText.setSelection(etJournalText.getText().length());
-                }
+        } else if (requestCode == REQUEST_SPEECH_PERMISSION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                startVoiceRecognition();
+            } else {
+                Toast.makeText(this, "Voice recognition requires microphone permission", Toast.LENGTH_SHORT).show();
             }
-            stopVoiceToTextAnimation();
         }
     }
 }
