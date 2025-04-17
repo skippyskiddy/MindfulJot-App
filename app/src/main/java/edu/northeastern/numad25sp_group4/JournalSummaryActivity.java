@@ -215,7 +215,6 @@ public class JournalSummaryActivity extends AppCompatActivity implements EntryIm
     }
 
     private void initViews() {
-        btnBack = findViewById(R.id.btn_back);
         tvEmotionSummary = findViewById(R.id.tv_emotion_summary);
         btnAddAnotherEmotion = findViewById(R.id.btn_add_another_emotion);
         etJournalText = findViewById(R.id.et_journal_text);
@@ -244,9 +243,6 @@ public class JournalSummaryActivity extends AppCompatActivity implements EntryIm
     }
 
     private void setupListeners() {
-        // Back button click listener
-        btnBack.setOnClickListener(v -> onBackPressed());
-
         // Back arrow click listener
         ivBackArrow.setOnClickListener(v -> onBackPressed());
 

@@ -166,7 +166,6 @@ public class SpecificEmotionActivity extends AppCompatActivity implements Emotio
 
     private void initViews() {
         Log.d(TAG, "Initializing views");
-        btnBack = findViewById(R.id.btn_back);
         tvTitle = findViewById(R.id.tv_title);
         tvSubtitle = findViewById(R.id.tv_subtitle);
         tvCategoryTitle = findViewById(R.id.tv_category_title);
@@ -333,13 +332,6 @@ public class SpecificEmotionActivity extends AppCompatActivity implements Emotio
 
     private void setupListeners() {
         Log.d(TAG, "Setting up listeners");
-
-        // Back button click listener
-        btnBack.setOnClickListener(v -> {
-            Log.d(TAG, "Back button clicked");
-            finish(); // Return to primary emotion selection
-            overridePendingTransition(R.anim.anim_slide_in_left, R.anim.anim_slide_out_right);
-        });
 
         // Back arrow click listener
         ivBackArrow.setOnClickListener(v -> {

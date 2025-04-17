@@ -7,26 +7,12 @@
     android:background="@color/background_dark"
     tools:context=".JournalSummaryActivity">
 
-    <!-- Back Button -->
-    <ImageButton
-        android:id="@+id/btn_back"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="Back"
-        android:src="@drawable/ic_arrow_back"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:tint="@color/white" />
-
-    <!-- Emotion Text (replaces title and card) -->
+    <!-- Emotion Text (replaces title and card) - adjusted top margin since we're removing the back button -->
     <TextView
         android:id="@+id/tv_emotion_summary"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="48dp"
         android:layout_marginStart="24dp"
         android:layout_marginEnd="24dp"
         android:text="I'm feeling Excited"
@@ -37,7 +23,7 @@
         android:lineSpacingExtra="4dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btn_back" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <!-- Add another emotion button -->
     <Button
