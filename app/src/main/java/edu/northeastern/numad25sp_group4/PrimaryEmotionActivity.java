@@ -2,10 +2,9 @@ package edu.northeastern.numad25sp_group4;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -13,6 +12,7 @@ import androidx.cardview.widget.CardView;
 
 import models.Emotion;
 import models.EmotionEntry;
+import utils.LoginManager;
 
 /**
  * Activity for selecting primary emotion category
@@ -20,20 +20,24 @@ import models.EmotionEntry;
  */
 public class PrimaryEmotionActivity extends AppCompatActivity {
 
-    private ImageButton btnBack;
     private TextView tvTitle;
     private CardView cardHighEnergyPleasant;
     private CardView cardHighEnergyUnpleasant;
     private CardView cardLowEnergyPleasant;
     private CardView cardLowEnergyUnpleasant;
+    private ImageView ivBackArrow;
 
     private EmotionEntry currentEntry;
     private boolean isAddingSecondEmotion = false;
+    private LoginManager loginManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_primary_emotion);
+
+        // Initialize LoginManager
+        loginManager = LoginManager.getInstance();
 
         // Get entry from intent (if we're adding a second emotion)
         if (getIntent().hasExtra("CURRENT_ENTRY")) {
@@ -55,49 +59,36 @@ public class PrimaryEmotionActivity extends AppCompatActivity {
         // Initialize views
         initViews();
 
+        // Set personalized title
+        setPersonalizedTitle();
+
         // Set up click listeners
         setupListeners();
     }
 
     private void initViews() {
-        btnBack = findViewById(R.id.btn_back);
         tvTitle = findViewById(R.id.tv_title);
         cardHighEnergyPleasant = findViewById(R.id.card_high_energy_pleasant);
         cardHighEnergyUnpleasant = findViewById(R.id.card_high_energy_unpleasant);
         cardLowEnergyPleasant = findViewById(R.id.card_low_energy_pleasant);
         cardLowEnergyUnpleasant = findViewById(R.id.card_low_energy_unpleasant);
+        ivBackArrow = findViewById(R.id.iv_back_arrow);
 
-        // Use a different animation for initial display
-        Animation initialBounceAnimation = AnimationUtils.loadAnimation(this, R.anim.anim_bounce_initial);
+        // No initial animations - will only animate on click
+    }
 
-        // Clear any existing animations first
-        cardHighEnergyUnpleasant.clearAnimation();
-        cardHighEnergyPleasant.clearAnimation();
-        cardLowEnergyUnpleasant.clearAnimation();
-        cardLowEnergyPleasant.clearAnimation();
+    private void setPersonalizedTitle() {
+        // Get user name from LoginManager
+        String userName = loginManager.getUserName(this);
 
-        // Apply animations with slight delays for a staggered effect
-        cardHighEnergyUnpleasant.startAnimation(initialBounceAnimation);
-
-        cardHighEnergyPleasant.postDelayed(() -> {
-            Animation animation = AnimationUtils.loadAnimation(this, R.anim.anim_bounce_initial);
-            cardHighEnergyPleasant.startAnimation(animation);
-        }, 100);
-
-        cardLowEnergyUnpleasant.postDelayed(() -> {
-            Animation animation = AnimationUtils.loadAnimation(this, R.anim.anim_bounce_initial);
-            cardLowEnergyUnpleasant.startAnimation(animation);
-        }, 200);
-
-        cardLowEnergyPleasant.postDelayed(() -> {
-            Animation animation = AnimationUtils.loadAnimation(this, R.anim.anim_bounce_initial);
-            cardLowEnergyPleasant.startAnimation(animation);
-        }, 300);
+        if (userName != null && !userName.isEmpty()) {
+            tvTitle.setText("How are you feeling, " + userName + "?");
+        }
     }
 
     private void setupListeners() {
-        // Back button click listener
-        btnBack.setOnClickListener(v -> {
+        // Back arrow click listener
+        ivBackArrow.setOnClickListener(v -> {
             // If adding second emotion, return to journal summary
             if (isAddingSecondEmotion) {
                 returnToJournalSummary();
