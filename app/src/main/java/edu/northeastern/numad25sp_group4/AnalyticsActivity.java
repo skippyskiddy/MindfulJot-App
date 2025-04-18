@@ -106,9 +106,8 @@ public class AnalyticsActivity extends AppCompatActivity implements BottomNaviga
         } else if (itemId == R.id.nav_analytics) {
             return true;
         } else if (itemId == R.id.nav_settings) {
-            // TODO: Navigate to settings screen
-            // Intent intent = new Intent(HomeActivity.this, SettingsActivity.class);
-            // startActivity(intent);
+            Intent intent = new Intent(AnalyticsActivity.this, SettingsActivity.class);
+            startActivity(intent);
             return true;
         }
         return false;

@@ -118,9 +118,8 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationV
             startActivity(intent);
             return true;
         } else if (itemId == R.id.nav_settings) {
-            // TODO: Navigate to settings screen
-            // Intent intent = new Intent(HomeActivity.this, SettingsActivity.class);
-            // startActivity(intent);
+            Intent intent = new Intent(HomeActivity.this, SettingsActivity.class);
+            startActivity(intent);
             return true;
         }
         return false;

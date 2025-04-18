@@ -163,9 +163,8 @@ public class EntriesActivity extends AppCompatActivity implements BottomNavigati
             Intent intent = new Intent(EntriesActivity.this, AnalyticsActivity.class);
             startActivity(intent);
         } else if (itemId == R.id.nav_settings) {
-            // TODO: Navigate to settings screen
-            // Intent intent = new Intent(EntriesActivity.this, SettingsActivity.class);
-            // startActivity(intent);
+            Intent intent = new Intent(EntriesActivity.this, SettingsActivity.class);
+            startActivity(intent);
             return true;
         }
         return false;
