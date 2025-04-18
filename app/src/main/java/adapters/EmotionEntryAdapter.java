@@ -1,6 +1,7 @@
 package adapters;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -82,6 +83,19 @@ public class EmotionEntryAdapter extends RecyclerView.Adapter<EmotionEntryAdapte
             // Set card background color
             holder.cardEntry.setCardBackgroundColor(cardColor);
 
+            // Determine if the background color is light or dark and set text color accordingly
+            if (isColorLight(cardColor)) {
+                // For light backgrounds, use dark text
+                // Option 1: Use plain black for maximum contrast
+                holder.tvEntryInfo.setTextColor(Color.BLACK);
+
+                // Option 2: Use a dark version of the emotion color for a more cohesive look
+                // holder.tvEntryInfo.setTextColor(getDarkerColor(cardColor));
+            } else {
+                // For dark backgrounds, keep white text
+                holder.tvEntryInfo.setTextColor(Color.WHITE);
+            }
+
             // Only set stroke if using MaterialCardView
             if (holder.cardEntry instanceof com.google.android.material.card.MaterialCardView) {
                 com.google.android.material.card.MaterialCardView materialCard =
@@ -113,11 +127,30 @@ public class EmotionEntryAdapter extends RecyclerView.Adapter<EmotionEntryAdapte
         }
     }
 
+    /**
+     * Creates a darker version of the given color
+     */
     private int getDarkerColor(int color) {
         float[] hsv = new float[3];
         android.graphics.Color.colorToHSV(color, hsv);
         hsv[2] *= 0.8f; // Value component
         return android.graphics.Color.HSVToColor(hsv);
+    }
+
+    /**
+     * Determines if a color is light or dark based on its luminance
+     */
+    private boolean isColorLight(int color) {
+        // Extract RGB values
+        double r = ((color >> 16) & 0xff) / 255.0;
+        double g = ((color >> 8) & 0xff) / 255.0;
+        double b = (color & 0xff) / 255.0;
+
+        // Calculate perceived brightness using human eye's sensitivity to different colors
+        double luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+
+        // Consider colors with luminance > 0.5 as "light"
+        return luminance > 0.5;
     }
 
     static class EntryViewHolder extends RecyclerView.ViewHolder {
