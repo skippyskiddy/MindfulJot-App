@@ -256,6 +256,9 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationV
     /**
      * Displays the last check-in information with colored emotions based on their categories
      */
+    /**
+     * Displays the last check-in information with colored emotions based on their categories
+     */
     private void displayLastCheckinInfo(EmotionEntry entry) {
         // Format the date
         SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy", Locale.getDefault());
@@ -265,19 +268,28 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationV
         List<Emotion> emotions = entry.getEmotions();
 
         if (emotions.isEmpty()) {
-            tvLastCheckin.setText("You last checked in on " + date + ". No emotion was logged.");
+            tvLastCheckin.setText("You last checked in on " + date + ".\nNo emotion was logged.");
         } else if (emotions.size() == 1) {
             // Create spannable string to color just the emotion name
-            String prefix = "You last checked in on " + date + ". Your last logged emotion was ";
+            String prefix = "You last checked in on " + date + ".\n";
+            String emotionPart = "Your last logged emotion was ";
             String emotionName = emotions.get(0).getName();
-            SpannableString spannableString = new SpannableString(prefix + emotionName);
+            SpannableString spannableString = new SpannableString(prefix + emotionPart + emotionName);
 
-            // Add color span for the emotion name
+            // Add size span for the emotion text part
+            spannableString.setSpan(
+                    new android.text.style.RelativeSizeSpan(1.2f),
+                    prefix.length(),
+                    prefix.length() + emotionPart.length() + emotionName.length(),
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+            );
+
+            // Add color span for the emotion name only
             int color = getColorForCategory(emotions.get(0).getCategory());
             spannableString.setSpan(
                     new ForegroundColorSpan(color),
-                    prefix.length(),
-                    prefix.length() + emotionName.length(),
+                    prefix.length() + emotionPart.length(),
+                    prefix.length() + emotionPart.length() + emotionName.length(),
                     Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
             );
 
@@ -285,21 +297,30 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationV
             tvLastCheckin.setText(spannableString);
         } else {
             // For two emotions, color each one separately
-            String prefix = "You last checked in on " + date + ". Your last logged emotions were ";
+            String prefix = "You last checked in on " + date + ".\n";
+            String emotionPart = "Your last logged emotions were ";
             String firstEmotionName = emotions.get(0).getName();
             String connector = " and ";
             String secondEmotionName = emotions.get(1).getName();
 
             SpannableString spannableString = new SpannableString(
-                    prefix + firstEmotionName + connector + secondEmotionName
+                    prefix + emotionPart + firstEmotionName + connector + secondEmotionName
+            );
+
+            // Add size span for the emotion text part
+            spannableString.setSpan(
+                    new android.text.style.RelativeSizeSpan(1.2f),
+                    prefix.length(),
+                    prefix.length() + emotionPart.length() + firstEmotionName.length() + connector.length() + secondEmotionName.length(),
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
             );
 
             // Color the first emotion
             int firstColor = getColorForCategory(emotions.get(0).getCategory());
             spannableString.setSpan(
                     new ForegroundColorSpan(firstColor),
-                    prefix.length(),
-                    prefix.length() + firstEmotionName.length(),
+                    prefix.length() + emotionPart.length(),
+                    prefix.length() + emotionPart.length() + firstEmotionName.length(),
                     Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
             );
 
@@ -307,8 +328,8 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationV
             int secondColor = getColorForCategory(emotions.get(1).getCategory());
             spannableString.setSpan(
                     new ForegroundColorSpan(secondColor),
-                    prefix.length() + firstEmotionName.length() + connector.length(),
-                    prefix.length() + firstEmotionName.length() + connector.length() + secondEmotionName.length(),
+                    prefix.length() + emotionPart.length() + firstEmotionName.length() + connector.length(),
+                    prefix.length() + emotionPart.length() + firstEmotionName.length() + connector.length() + secondEmotionName.length(),
                     Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
             );
 
@@ -316,7 +337,6 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationV
             tvLastCheckin.setText(spannableString);
         }
     }
-
     /**
      * Get color for emotion category
      */

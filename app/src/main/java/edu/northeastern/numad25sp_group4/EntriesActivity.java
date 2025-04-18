@@ -15,6 +15,9 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.applandeo.materialcalendarview.CalendarDay;
 import com.applandeo.materialcalendarview.CalendarView;
 import com.applandeo.materialcalendarview.listeners.OnCalendarDayClickListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.ValueEventListener;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -55,6 +58,8 @@ public class EntriesActivity extends AppCompatActivity implements BottomNavigati
 
         // Initialize views
         initViews();
+        setTitle();
+
 
         try {
             calendarView.setDate(Calendar.getInstance());
@@ -78,6 +83,47 @@ public class EntriesActivity extends AppCompatActivity implements BottomNavigati
         // Set the Entries tab as selected
         bottomNavigationView.setSelectedItemId(R.id.nav_entries);
     }
+
+    private void setTitle() {
+        // Get user name from LoginManager
+        String userName = loginManager.getUserName(this);
+
+        // If user name is empty, try to fetch it from Firebase
+        if (userName.isEmpty() && userId != null) {
+            fetchUserName();
+        } else {
+            tvEntryLogTitle.setText(userName + "'s emotion entry log");
+        }
+    }
+
+    /**
+     * Fetches the user's name from Firebase
+     */
+    private void fetchUserName() {
+        if (userId != null) {
+            firebaseHelper.getUserData(userId, new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    if (snapshot.exists()) {
+                        String name = snapshot.child("name").getValue(String.class);
+                        if (name != null && !name.isEmpty()) {
+                            // Update the title with the user's name
+                            tvEntryLogTitle.setText(name + "'s emotion entry log");
+
+                            // Save name to LoginManager for future use
+                            loginManager.saveLoginState(EntriesActivity.this, name);
+                        }
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                    // Handle error
+                }
+            });
+        }
+    }
+
 
     private void setupListeners() {
         // Set up bottom navigation listener

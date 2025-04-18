@@ -8,15 +8,16 @@
     android:background="@color/background_dark"
     tools:context=".EntriesActivity">
 
-    <!-- Title -->
+    <!-- Title - Updated to match home page styling with personalization -->
     <TextView
         android:id="@+id/tv_entry_log_title"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="Your emotion entry log"
         android:textColor="@color/white"
-        android:textSize="24sp"
+        android:textSize="32sp"
         android:textStyle="bold"
+        android:gravity="center"
         android:layout_marginTop="32dp"
         android:layout_marginStart="24dp"
         android:layout_marginEnd="24dp"
@@ -24,24 +25,13 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Calendar View
-    <com.kizitonwose.calendar.view.CalendarView
-        android:id="@+id/calendar_view"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_margin="24dp"
-        android:background="@android:color/darker_gray"
-        app:layout_constraintTop_toBottomOf="@id/tv_entry_log_title"
-        app:layout_constraintBottom_toTopOf="@id/bottom_navigation"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
--->
-
     <com.applandeo.materialcalendarview.CalendarView
         android:id="@+id/calendarView"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
         app:type="one_day_picker"
         app:eventsEnabled="true"
         app:layout_constraintTop_toBottomOf="@id/tv_entry_log_title"
