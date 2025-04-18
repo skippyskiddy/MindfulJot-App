@@ -1,8 +1,13 @@
 package edu.northeastern.numad25sp_group4;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
 import android.view.MenuItem;
+import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -30,6 +35,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationV
     private TextView tvGreeting;
     private TextView tvLastCheckin;
     private CardView cardAddEntry;
+    private Button btnAddEntry;
     private BottomNavigationView bottomNavigationView;
 
     private FirebaseHelper firebaseHelper;
@@ -67,6 +73,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationV
         tvGreeting = findViewById(R.id.tv_greeting);
         tvLastCheckin = findViewById(R.id.tv_last_checkin);
         cardAddEntry = findViewById(R.id.card_add_entry);
+        btnAddEntry = findViewById(R.id.btn_add_entry);
         bottomNavigationView = findViewById(R.id.bottom_navigation);
 
         // Set the Home tab as selected
@@ -74,7 +81,31 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationV
     }
 
     private void setupListeners() {
-        // Set up card click listener for emotion entry
+        // Set up button click listener for emotion entry
+        btnAddEntry.setOnClickListener(v -> {
+            // Add a small animation to the button when clicked
+            v.animate()
+                    .scaleX(0.95f)
+                    .scaleY(0.95f)
+                    .setDuration(100)
+                    .withEndAction(() -> {
+                        // Return to original size
+                        v.animate()
+                                .scaleX(1f)
+                                .scaleY(1f)
+                                .setDuration(100)
+                                .withEndAction(() -> {
+                                    // Navigate to primary emotion selection screen
+                                    Intent intent = new Intent(HomeActivity.this, PrimaryEmotionActivity.class);
+                                    startActivity(intent);
+                                    // Apply custom transition animation
+                                    overridePendingTransition(R.anim.anim_slide_in_right, R.anim.anim_slide_out_left);
+                                });
+                    })
+                    .start();
+        });
+
+        // Also keep the card clickable for users who prefer clicking the card
         cardAddEntry.setOnClickListener(v -> {
             // Add a small animation to the card when clicked
             v.animate()
@@ -223,7 +254,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationV
     }
 
     /**
-     * Displays the last check-in information
+     * Displays the last check-in information with colored emotions based on their categories
      */
     private void displayLastCheckinInfo(EmotionEntry entry) {
         // Format the date
@@ -236,12 +267,71 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationV
         if (emotions.isEmpty()) {
             tvLastCheckin.setText("You last checked in on " + date + ". No emotion was logged.");
         } else if (emotions.size() == 1) {
-            tvLastCheckin.setText("You last checked in on " + date +
-                    ". Your last logged emotion was " + emotions.get(0).getName());
+            // Create spannable string to color just the emotion name
+            String prefix = "You last checked in on " + date + ". Your last logged emotion was ";
+            String emotionName = emotions.get(0).getName();
+            SpannableString spannableString = new SpannableString(prefix + emotionName);
+
+            // Add color span for the emotion name
+            int color = getColorForCategory(emotions.get(0).getCategory());
+            spannableString.setSpan(
+                    new ForegroundColorSpan(color),
+                    prefix.length(),
+                    prefix.length() + emotionName.length(),
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+            );
+
+            // Set the styled text
+            tvLastCheckin.setText(spannableString);
         } else {
-            tvLastCheckin.setText("You last checked in on " + date +
-                    ". Your last logged emotions were " + emotions.get(0).getName() +
-                    " and " + emotions.get(1).getName());
+            // For two emotions, color each one separately
+            String prefix = "You last checked in on " + date + ". Your last logged emotions were ";
+            String firstEmotionName = emotions.get(0).getName();
+            String connector = " and ";
+            String secondEmotionName = emotions.get(1).getName();
+
+            SpannableString spannableString = new SpannableString(
+                    prefix + firstEmotionName + connector + secondEmotionName
+            );
+
+            // Color the first emotion
+            int firstColor = getColorForCategory(emotions.get(0).getCategory());
+            spannableString.setSpan(
+                    new ForegroundColorSpan(firstColor),
+                    prefix.length(),
+                    prefix.length() + firstEmotionName.length(),
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+            );
+
+            // Color the second emotion
+            int secondColor = getColorForCategory(emotions.get(1).getCategory());
+            spannableString.setSpan(
+                    new ForegroundColorSpan(secondColor),
+                    prefix.length() + firstEmotionName.length() + connector.length(),
+                    prefix.length() + firstEmotionName.length() + connector.length() + secondEmotionName.length(),
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+            );
+
+            // Set the styled text
+            tvLastCheckin.setText(spannableString);
+        }
+    }
+
+    /**
+     * Get color for emotion category
+     */
+    private int getColorForCategory(Emotion.Category category) {
+        switch (category) {
+            case HIGH_ENERGY_PLEASANT:
+                return Color.parseColor("#FFEE82"); // Bright yellow
+            case HIGH_ENERGY_UNPLEASANT:
+                return Color.parseColor("#FF6B6B"); // Red
+            case LOW_ENERGY_PLEASANT:
+                return Color.parseColor("#7FE57F"); // Green
+            case LOW_ENERGY_UNPLEASANT:
+                return Color.parseColor("#7FB8FF"); // Blue
+            default:
+                return Color.WHITE;
         }
     }
 
