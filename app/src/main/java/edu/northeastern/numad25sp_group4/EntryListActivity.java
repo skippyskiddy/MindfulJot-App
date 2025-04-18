@@ -22,7 +22,6 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -31,6 +30,9 @@ import models.EmotionEntry;
 import utils.FirebaseHelper;
 
 public class EntryListActivity extends AppCompatActivity {
+
+    private static final String TAG = "EntryListActivity";
+
     private TextView tvEntryListDate;
     private EmotionEntryAdapter adapter;
     private RecyclerView rvEntries;
@@ -39,7 +41,7 @@ public class EntryListActivity extends AppCompatActivity {
     private FirebaseHelper firebaseHelper;
     private String userId;
 
-    ArrayList<EmotionEntry> emotionEntries = new ArrayList<>();
+    private ArrayList<EmotionEntry> emotionEntries = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,29 +61,37 @@ public class EntryListActivity extends AppCompatActivity {
 
         loadSelectedDate();
         setupBackButton();
+        setupRecyclerView();
         loadEntriesForDate();
-
-        rvEntries = findViewById(R.id.rv_entries);
-        adapter = new EmotionEntryAdapter(this, emotionEntries, entry -> {
-            // TODO: uncomment eventually
-            // Intent intent = new Intent(EntryListActivity.this, EntryEditActivity.class);
-            // intent.putExtra("entryId", entry.getEntryId());
-            // startActivity(intent);
-        });
-        rvEntries.setAdapter(adapter);
-        rvEntries.setLayoutManager(new LinearLayoutManager(this));
-
-        enableSwipeToDelete();
     }
 
     private void initViews() {
         tvEntryListDate = findViewById(R.id.tv_entry_list_date);
         ivBackArrow = findViewById(R.id.iv_back_arrow);
+        rvEntries = findViewById(R.id.rv_entries);
     }
 
     private void setupBackButton() {
-        ivBackArrow.setOnClickListener(view ->
-                getOnBackPressedDispatcher().onBackPressed());
+        ivBackArrow.setOnClickListener(view -> finish());
+    }
+
+    private void setupRecyclerView() {
+        // Initialize adapter with click listener
+        adapter = new EmotionEntryAdapter(this, emotionEntries, entry -> {
+            // Navigate to EntryEditActivity when an entry is clicked
+            if (entry != null && entry.getEntryId() != null) {
+                Intent intent = new Intent(EntryListActivity.this, EntryEditActivity.class);
+                intent.putExtra("entryId", entry.getEntryId());
+                startActivity(intent);
+            }
+        });
+
+        // Set up RecyclerView
+        rvEntries.setAdapter(adapter);
+        rvEntries.setLayoutManager(new LinearLayoutManager(this));
+
+        // Enable swipe to delete
+        enableSwipeToDelete();
     }
 
     private void loadSelectedDate() {
@@ -96,8 +106,8 @@ public class EntryListActivity extends AppCompatActivity {
 
             // Update the date title UI
             if (tvEntryListDate != null) {
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM d, yyyy");
-                tvEntryListDate.setText(selectedDate.format(formatter));
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM d, yyyy");
+                tvEntryListDate.setText(formatter.format(selectedDate));
             }
         } else {
             Toast.makeText(this, "No date selected. Returning to previous screen.", Toast.LENGTH_SHORT).show();
@@ -106,6 +116,11 @@ public class EntryListActivity extends AppCompatActivity {
     }
 
     private void loadEntriesForDate() {
+        if (userId == null || selectedDate == null) {
+            updateEmptyState(true);
+            return;
+        }
+
         firebaseHelper.getEntriesForDate(userId, selectedDate, new FirebaseHelper.FilteredEntriesListener() {
             @Override
             public void onSuccess(List<EmotionEntry> filteredEntries) {
@@ -118,16 +133,27 @@ public class EntryListActivity extends AppCompatActivity {
                 adapter.notifyDataSetChanged();
 
                 // Show fallback if no entries
-                TextView tvNoEntries = findViewById(R.id.tv_no_entries);
-                tvNoEntries.setVisibility(emotionEntries.isEmpty() ? View.VISIBLE : View.GONE);
+                updateEmptyState(emotionEntries.isEmpty());
             }
 
             @Override
             public void onFailure(DatabaseError error) {
-                Log.e("EntryListActivity", "Failed to fetch entries", error.toException());
+                Log.e(TAG, "Failed to fetch entries", error.toException());
                 Toast.makeText(EntryListActivity.this, "Failed to load entries.", Toast.LENGTH_SHORT).show();
+                updateEmptyState(true);
             }
         });
+    }
+
+    private void updateEmptyState(boolean isEmpty) {
+        TextView tvNoEntries = findViewById(R.id.tv_no_entries);
+        if (tvNoEntries != null) {
+            tvNoEntries.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
+        }
+
+        if (rvEntries != null) {
+            rvEntries.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
+        }
     }
 
     private void enableSwipeToDelete() {
@@ -155,15 +181,13 @@ public class EntryListActivity extends AppCompatActivity {
                                 public void onSuccess() {
                                     emotionEntries.remove(position);
                                     adapter.notifyItemRemoved(position);
-
-                                    if (emotionEntries.isEmpty()) {
-                                        findViewById(R.id.tv_no_entries).setVisibility(View.VISIBLE);
-                                    }
+                                    updateEmptyState(emotionEntries.isEmpty());
                                 }
 
                                 @Override
                                 public void onFailure(DatabaseError error) {
-                                    Toast.makeText(EntryListActivity.this, "Failed to delete entry", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(EntryListActivity.this,
+                                            "Failed to delete entry", Toast.LENGTH_SHORT).show();
                                     adapter.notifyItemChanged(position); // restore item
                                 }
                             });
@@ -178,5 +202,12 @@ public class EntryListActivity extends AppCompatActivity {
         };
 
         new ItemTouchHelper(simpleItemTouchCallback).attachToRecyclerView(rvEntries);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Refresh data when returning to this activity (e.g., after editing or deleting an entry)
+        loadEntriesForDate();
     }
 }

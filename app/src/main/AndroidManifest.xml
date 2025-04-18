@@ -49,7 +49,7 @@
         <activity android:name=".JournalSummaryActivity" />
         <activity android:name=".EntriesActivity" />
         <activity android:name=".EntryListActivity" />
-<!--        <activity android:name=".EntryEditActivity" />-->
+        <activity android:name=".EntryEditActivity" />
         <activity android:name=".SettingsActivity" />
         <activity android:name=".NotificationSettingsActivity" />
         <activity android:name=".AboutAppActivity" />
