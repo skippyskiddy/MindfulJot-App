@@ -49,15 +49,11 @@ public class SettingsActivity extends AppCompatActivity implements BottomNavigat
         // Initialize views
         initViews();
 
-        // Set up user greeting
-        setUserGreeting();
-
         // Setup listeners
         setupListeners();
     }
 
     private void initViews() {
-        tvUserGreeting = findViewById(R.id.tv_user_greeting);
         tvEditProfile = findViewById(R.id.tv_edit_profile);
         tvNotifications = findViewById(R.id.tv_notifications);
         tvAboutApp = findViewById(R.id.tv_about_app);
@@ -67,19 +63,6 @@ public class SettingsActivity extends AppCompatActivity implements BottomNavigat
         // Set the Settings tab as selected
         bottomNavigationView.setSelectedItemId(R.id.nav_settings);
     }
-
-    private void setUserGreeting() {
-        // Get user name from LoginManager
-        String userName = loginManager.getUserName(this);
-
-        // If user name is empty, try to fetch it from Firebase
-        if (userName.isEmpty() && userId != null) {
-            fetchUserName();
-        } else {
-            tvUserGreeting.setText("Hi, " + userName);
-        }
-    }
-
     /**
      * Fetches the user's name from Firebase
      */

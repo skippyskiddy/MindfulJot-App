@@ -14,6 +14,10 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.Toast;
+import android.graphics.Color;
+import android.widget.TextView;
+import android.view.ViewGroup;
+
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -77,11 +81,36 @@ public class SignupActivity extends AppCompatActivity {
     }
 
     private void setupAgeSpinner() {
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
+        // Create the age ranges - modify this based on your needs
+        String[] ageRanges = new String[]{
+                "Select Age Range", "18-24", "25-34", "35-44", "45-54", "55-64", "65+"
+        };
+
+        // Create custom adapter with white text
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(
                 this,
-                R.array.age_ranges,
-                android.R.layout.simple_spinner_item
-        );
+                android.R.layout.simple_spinner_item,
+                ageRanges
+        ) {
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View view = super.getView(position, convertView, parent);
+                TextView textView = (TextView) view;
+                textView.setTextColor(Color.WHITE);
+                return view;
+            }
+
+            @Override
+            public View getDropDownView(int position, View convertView, ViewGroup parent) {
+                View view = super.getDropDownView(position, convertView, parent);
+                TextView textView = (TextView) view;
+                textView.setTextColor(Color.WHITE);
+                textView.setBackgroundColor(Color.parseColor("#333333"));
+                textView.setPadding(20, 20, 20, 20);
+                return view;
+            }
+        };
+
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerAge.setAdapter(adapter);
     }
