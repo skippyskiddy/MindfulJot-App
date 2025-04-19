@@ -1,16 +1,25 @@
 package models;
 
+import androidx.room.Entity;
+import androidx.room.PrimaryKey;
+import androidx.room.TypeConverters;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import db.converters.EmotionEntryConverters;
+
 /**
  * Model class representing an emotion entry
  */
+@Entity(tableName = "emotion_entries")
+@TypeConverters(EmotionEntryConverters.class)
 public class EmotionEntry implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    @PrimaryKey
     private String entryId;
     private String userId;
     private List<Emotion> emotions; // Limited to max 2 emotions per entry
@@ -18,6 +27,7 @@ public class EmotionEntry implements Serializable {
     private List<String> imageUrls; // URLs to stored images, max 3
     private List<String> tags; // Tags associated with the entry, max 6
     private Date timestamp;
+    private boolean isSynced = false;
 
     // Empty constructor required for Firebase
     public EmotionEntry() {
@@ -110,4 +120,13 @@ public class EmotionEntry implements Serializable {
     public void setTimestamp(Date timestamp) {
         this.timestamp = timestamp;
     }
+
+    public boolean isSynced() {
+        return isSynced;
+    }
+
+    public void setSynced(boolean synced) {
+        isSynced = synced;
+    }
+
 }
