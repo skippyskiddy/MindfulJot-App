@@ -2,7 +2,6 @@ package models;
 
 import androidx.annotation.NonNull;
 import androidx.room.Entity;
-import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 import androidx.room.TypeConverters;
 
@@ -39,7 +38,6 @@ public class EmotionEntry implements Serializable {
         tags = new ArrayList<>();
     }
 
-    @Ignore
     public EmotionEntry(@NonNull String entryId, String userId, Date timestamp) {
         this.entryId = entryId;
         this.userId = userId;

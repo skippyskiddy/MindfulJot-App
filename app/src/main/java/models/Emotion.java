@@ -2,7 +2,6 @@ package models;
 
 import androidx.annotation.NonNull;
 import androidx.room.Entity;
-import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 import androidx.room.TypeConverters;
 
@@ -36,7 +35,6 @@ public class Emotion implements Serializable {
     public Emotion() {
     }
 
-    @Ignore
     public Emotion(@NonNull String name, Category category, String definition, int energyLevel) {
         this.name = name;
         this.category = category;
