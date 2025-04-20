@@ -40,11 +40,6 @@ dependencies {
     implementation("com.google.firebase:firebase-analytics")
     implementation ("com.google.firebase:firebase-storage:20.2.1")
 
-    // Room
-    implementation("androidx.room:room-runtime:2.7.0")
-    annotationProcessor("androidx.room:room-compiler:2.7.0")
-
-    implementation("com.google.code.gson:gson:2.10.1")
 
     // Picasso for image loading
     implementation ("com.squareup.picasso:picasso:2.71828")

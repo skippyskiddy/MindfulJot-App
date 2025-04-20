@@ -1,18 +1,10 @@
 package models;
 
-import androidx.annotation.NonNull;
-import androidx.room.Entity;
-import androidx.room.PrimaryKey;
-import androidx.room.TypeConverters;
-
 import java.io.Serializable;
-
-import db.converters.EmotionConverters;
 
 /**
  * Model class representing an emotion
  */
-@Entity(tableName = "emotions")
 public class Emotion implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -23,19 +15,16 @@ public class Emotion implements Serializable {
         LOW_ENERGY_UNPLEASANT
     }
 
-    @PrimaryKey
-    @NonNull
     private String name;
-    @TypeConverters(EmotionConverters.class)
     private Category category;
     private String definition;
     private int energyLevel; // TODO: 1-10 scale, helps for ordering within a category
 
-    // Empty constructor required for Firebase and Room
+    // Empty constructor required for Firebase
     public Emotion() {
     }
 
-    public Emotion(@NonNull String name, Category category, String definition, int energyLevel) {
+    public Emotion(String name, Category category, String definition, int energyLevel) {
         this.name = name;
         this.category = category;
         this.definition = definition;
@@ -43,12 +32,11 @@ public class Emotion implements Serializable {
     }
 
     // Getters and setters
-    @NonNull
     public String getName() {
         return name;
     }
 
-    public void setName(@NonNull String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
