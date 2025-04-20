@@ -1,6 +1,5 @@
 package models;
 
-import androidx.annotation.NonNull;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 import androidx.room.TypeConverters;
@@ -21,7 +20,6 @@ public class EmotionEntry implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @PrimaryKey
-    @NonNull
     private String entryId;
     private String userId;
     private List<Emotion> emotions; // Limited to max 2 emotions per entry
@@ -38,7 +36,7 @@ public class EmotionEntry implements Serializable {
         tags = new ArrayList<>();
     }
 
-    public EmotionEntry(@NonNull String entryId, String userId, Date timestamp) {
+    public EmotionEntry(String entryId, String userId, Date timestamp) {
         this.entryId = entryId;
         this.userId = userId;
         this.timestamp = timestamp;
@@ -53,7 +51,7 @@ public class EmotionEntry implements Serializable {
         return entryId;
     }
 
-    public void setEntryId(@NonNull String entryId) {
+    public void setEntryId(String entryId) {
         this.entryId = entryId;
     }
 
