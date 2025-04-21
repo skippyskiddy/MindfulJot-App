@@ -155,7 +155,6 @@
             </androidx.cardview.widget.CardView>
 
             <!-- Card 3: Emotion Breakdown -->
-            <!-- Card 3: Emotion Breakdown -->
             <androidx.cardview.widget.CardView
                 android:id="@+id/card_emotion_breakdown"
                 android:layout_width="match_parent"
@@ -199,103 +198,74 @@
                         app:layout_constraintTop_toBottomOf="@+id/tv_breakdown_label" />
 
                     <!-- Emotion Grid Layout with 1:1 aspect ratio -->
-                    <androidx.constraintlayout.widget.ConstraintLayout
+                    <LinearLayout
                         android:id="@+id/emotion_grid"
                         android:layout_width="0dp"
-                        android:layout_height="0dp"
+                        android:layout_height="wrap_content"
                         android:layout_marginTop="16dp"
-                        app:layout_constraintDimensionRatio="1:1"
-                        app:layout_constraintEnd_toEndOf="parent"
+                        android:orientation="horizontal"
+                        android:gravity="center"
+                        android:weightSum="4"
+                        app:layout_constraintTop_toBottomOf="@+id/tv_breakdown_title"
                         app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@+id/tv_breakdown_title">
+                        app:layout_constraintEnd_toEndOf="parent">
 
-                        <!-- Guidelines for equal quadrants -->
-                        <androidx.constraintlayout.widget.Guideline
-                            android:id="@+id/horizontal_middle"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            app:layout_constraintGuide_percent="0.5" />
-
-                        <androidx.constraintlayout.widget.Guideline
-                            android:id="@+id/vertical_middle"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            app:layout_constraintGuide_percent="0.5" />
-
-                        <!-- High Energy Pleasant -->
                         <TextView
                             android:id="@+id/tv_high_energy_pleasant"
                             android:layout_width="0dp"
-                            android:layout_height="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
                             android:layout_margin="4dp"
-                            android:background="@drawable/emotion_breakdown_high_pleasant"
                             android:gravity="center"
-                            android:padding="8dp"
+                            android:background="@drawable/emotion_breakdown_high_pleasant"
                             android:text="High energy pleasant: 0%"
                             android:textColor="#5F5000"
                             android:textSize="16sp"
                             android:textStyle="bold"
-                            app:layout_constraintStart_toEndOf="@id/vertical_middle"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintTop_toTopOf="parent"
-                            app:layout_constraintBottom_toTopOf="@id/horizontal_middle" />
+                            android:padding="8dp" />
 
-                        <!-- High Energy Unpleasant -->
                         <TextView
                             android:id="@+id/tv_high_energy_unpleasant"
                             android:layout_width="0dp"
-                            android:layout_height="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
                             android:layout_margin="4dp"
-                            android:background="@drawable/emotion_breakdown_high_unpleasant"
                             android:gravity="center"
-                            android:padding="8dp"
+                            android:background="@drawable/emotion_breakdown_high_unpleasant"
                             android:text="High energy unpleasant: 0%"
                             android:textColor="#8E2020"
                             android:textSize="16sp"
                             android:textStyle="bold"
-                            app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintEnd_toStartOf="@id/vertical_middle"
-                            app:layout_constraintTop_toTopOf="parent"
-                            app:layout_constraintBottom_toTopOf="@id/horizontal_middle" />
+                            android:padding="8dp" />
 
-                        <!-- Low Energy Pleasant -->
                         <TextView
                             android:id="@+id/tv_low_energy_pleasant"
                             android:layout_width="0dp"
-                            android:layout_height="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
                             android:layout_margin="4dp"
-                            android:background="@drawable/emotion_breakdown_low_pleasant"
                             android:gravity="center"
-                            android:padding="8dp"
+                            android:background="@drawable/emotion_breakdown_low_pleasant"
                             android:text="Low energy pleasant: 0%"
                             android:textColor="#0F5B0F"
                             android:textSize="16sp"
                             android:textStyle="bold"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintStart_toEndOf="@id/vertical_middle"
-                            app:layout_constraintTop_toBottomOf="@id/horizontal_middle"
-                            app:layout_constraintBottom_toBottomOf="parent" />
+                            android:padding="8dp" />
 
-                        <!-- Low Energy Unpleasant -->
                         <TextView
                             android:id="@+id/tv_low_energy_unpleasant"
                             android:layout_width="0dp"
-                            android:layout_height="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
                             android:layout_margin="4dp"
-                            android:background="@drawable/emotion_breakdown_low_unpleasant"
                             android:gravity="center"
-                            android:padding="8dp"
+                            android:background="@drawable/emotion_breakdown_low_unpleasant"
                             android:text="Low energy unpleasant: 0%"
                             android:textColor="#004975"
                             android:textSize="16sp"
                             android:textStyle="bold"
-                            app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintEnd_toStartOf="@id/vertical_middle"
-                            app:layout_constraintTop_toBottomOf="@id/horizontal_middle"
-                            app:layout_constraintBottom_toBottomOf="parent" />
-                    </androidx.constraintlayout.widget.ConstraintLayout>
+                            android:padding="8dp" />
+                    </LinearLayout>
                 </androidx.constraintlayout.widget.ConstraintLayout>
             </androidx.cardview.widget.CardView>
         </LinearLayout>
