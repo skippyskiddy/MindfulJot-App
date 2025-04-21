@@ -29,6 +29,8 @@ import models.Emotion;
 import models.EmotionEntry;
 import utils.FirebaseHelper;
 import utils.LoginManager;
+import utils.NotificationHelper;
+import utils.NotificationScheduler;
 
 public class HomeActivity extends AppCompatActivity implements BottomNavigationView.OnItemSelectedListener {
 
@@ -67,6 +69,45 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationV
 
         // Set up listeners
         setupListeners();
+
+        // Initialize notifications
+        initializeNotifications();
+    }
+
+    /**
+     * Initializes notifications based on user preferences
+     */
+    private void initializeNotifications() {
+        if (firebaseHelper.getCurrentUser() != null) {
+            String userId = firebaseHelper.getCurrentUser().getUid();
+
+            firebaseHelper.getUserData(userId, new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    if (snapshot.exists()) {
+                        String preference = snapshot.child("notificationPreference").getValue(String.class);
+                        String name = snapshot.child("name").getValue(String.class);
+
+                        if (preference != null && !preference.equals("none")) {
+                            // Create notification channel first for Android 8.0+
+                            NotificationHelper.createNotificationChannel(HomeActivity.this);
+
+                            // Schedule notifications
+                            NotificationScheduler.scheduleNotifications(
+                                    HomeActivity.this,
+                                    preference,
+                                    name != null ? name : ""
+                            );
+                        }
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                    // Failed to get user data
+                }
+            });
+        }
     }
 
     private void initViews() {
@@ -256,9 +297,6 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationV
     /**
      * Displays the last check-in information with colored emotions based on their categories
      */
-    /**
-     * Displays the last check-in information with colored emotions based on their categories
-     */
     private void displayLastCheckinInfo(EmotionEntry entry) {
         // Format the date
         SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy", Locale.getDefault());
@@ -337,6 +375,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationV
             tvLastCheckin.setText(spannableString);
         }
     }
+
     /**
      * Get color for emotion category
      */

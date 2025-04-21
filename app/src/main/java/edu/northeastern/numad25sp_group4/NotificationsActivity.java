@@ -17,12 +17,19 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.core.app.ActivityCompat;
 
+
 import com.google.android.material.card.MaterialCardView;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import utils.FirebaseHelper;
+import utils.NotificationScheduler;
+import utils.NotificationHelper;
+import utils.LoginManager;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.ValueEventListener;
 
 /**
  * Second onboarding screen - asks for notification preferences
@@ -199,6 +206,9 @@ public class NotificationsActivity extends AppCompatActivity {
             firebaseHelper.updateUserData(userId, updates)
                     .addOnSuccessListener(aVoid -> {
                         // Preference saved successfully
+
+                        // Initialize notifications based on selected preference
+                        initializeNotifications();
                     })
                     .addOnFailureListener(e -> {
                         // Failed to save preference
@@ -208,7 +218,58 @@ public class NotificationsActivity extends AppCompatActivity {
                     });
         }
     }
+    /**
+     * Initialize notifications based on the selected preference
+     */
+    private void initializeNotifications() {
+        if (selectedPreference.equals("none")) {
+            // No notifications, cancel any existing ones
+            NotificationScheduler.cancelAllNotifications(this);
+            return;
+        }
 
+        // Get the user's name
+        String userName = "";
+        if (firebaseHelper.getCurrentUser() != null) {
+            // For now, let's use the login manager to get the name if possible
+            userName = LoginManager.getInstance().getUserName(this);
+
+            // If not found in login manager, get from Firebase (will be async so less ideal)
+            if (userName.isEmpty()) {
+                String userId = firebaseHelper.getCurrentUser().getUid();
+                firebaseHelper.getUserData(userId, new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        if (snapshot.exists()) {
+                            String name = snapshot.child("name").getValue(String.class);
+                            if (name != null && !name.isEmpty()) {
+                                // Schedule notifications with the name
+                                NotificationScheduler.scheduleNotifications(
+                                        NotificationsActivity.this,
+                                        selectedPreference,
+                                        name
+                                );
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        // If we can't get the name, schedule without it
+                        NotificationScheduler.scheduleNotifications(
+                                NotificationsActivity.this,
+                                selectedPreference,
+                                ""
+                        );
+                    }
+                });
+                return;
+            }
+        }
+
+        // Schedule the notifications
+        NotificationScheduler.scheduleNotifications(this, selectedPreference, userName);
+    }
     private void requestNotificationPermission() {
         // For Android 13 (API level 33) and above, use the POST_NOTIFICATIONS permission
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
