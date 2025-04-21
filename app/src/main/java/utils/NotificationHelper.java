@@ -26,7 +26,6 @@ public class NotificationHelper {
     private static final String CHANNEL_DESCRIPTION = "Reminders to log your emotions";
 
     public static final int NOTIFICATION_ID = 1001;
-//    public static final int TEST_NOTIFICATION_ID = 9999;
 
     /**
      * Creates the notification channel for Android 8.0 and higher

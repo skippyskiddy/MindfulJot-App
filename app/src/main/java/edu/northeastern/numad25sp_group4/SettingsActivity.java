@@ -134,9 +134,6 @@ public class SettingsActivity extends AppCompatActivity implements BottomNavigat
     /**
      * Shows confirmation dialog before logging out
      */
-    /**
-     * Shows confirmation dialog before logging out
-     */
     private void showLogoutConfirmation() {
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle("Logout")
