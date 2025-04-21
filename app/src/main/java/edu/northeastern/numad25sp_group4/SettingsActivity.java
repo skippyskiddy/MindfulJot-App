@@ -18,6 +18,7 @@ import com.google.firebase.database.ValueEventListener;
 
 import utils.FirebaseHelper;
 import utils.LoginManager;
+import android.graphics.Color;
 
 public class SettingsActivity extends AppCompatActivity implements BottomNavigationView.OnItemSelectedListener {
 
@@ -133,8 +134,11 @@ public class SettingsActivity extends AppCompatActivity implements BottomNavigat
     /**
      * Shows confirmation dialog before logging out
      */
+    /**
+     * Shows confirmation dialog before logging out
+     */
     private void showLogoutConfirmation() {
-        new AlertDialog.Builder(this)
+        AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle("Logout")
                 .setMessage("Are you sure you want to log out?")
                 .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
@@ -144,7 +148,26 @@ public class SettingsActivity extends AppCompatActivity implements BottomNavigat
                     }
                 })
                 .setNegativeButton("No", null)
-                .show();
+                .create();
+
+        // Ensure dialog text is visible in all themes
+        dialog.setOnShowListener(new DialogInterface.OnShowListener() {
+            @Override
+            public void onShow(DialogInterface dialogInterface) {
+                TextView titleView = dialog.findViewById(android.R.id.title);
+                TextView messageView = dialog.findViewById(android.R.id.message);
+
+                if (titleView != null) {
+                    titleView.setTextColor(Color.BLACK);
+                }
+
+                if (messageView != null) {
+                    messageView.setTextColor(Color.BLACK);
+                }
+            }
+        });
+
+        dialog.show();
     }
 
     /**
