@@ -166,6 +166,7 @@ public class EntryEditActivity extends AppCompatActivity implements EntryImageAd
     private void setupAdapters() {
         // Set up image adapter
         imageAdapter = new EntryImageAdapter(this, imageUris, this);
+        imageAdapter.setEditMode(isEditMode);
         recyclerImages.setAdapter(imageAdapter);
     }
 
@@ -398,6 +399,10 @@ public class EntryEditActivity extends AppCompatActivity implements EntryImageAd
         btnEditEntry.setVisibility(enable ? View.GONE : View.VISIBLE);
         btnDoneEditing.setVisibility(enable ? View.VISIBLE : View.GONE);
 
+        // Update the adapter to show/hide delete buttons
+        if (imageAdapter != null) {
+            imageAdapter.setEditMode(enable);
+        }
         // Toggle character count visibility
         tvCharCount.setVisibility(enable ? View.VISIBLE : View.GONE);
         if (enable) {

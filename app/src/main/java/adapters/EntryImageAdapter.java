@@ -16,12 +16,12 @@ import com.squareup.picasso.Picasso;
 import java.util.List;
 
 import edu.northeastern.numad25sp_group4.R;
-
 public class EntryImageAdapter extends RecyclerView.Adapter<EntryImageAdapter.ImageViewHolder> {
 
     private final Context context;
     private final List<Uri> imageUris;
     private final OnImageRemoveListener listener;
+    private boolean editMode = false; // Add this flag to track edit mode
 
     public interface OnImageRemoveListener {
         void onImageRemove(int position);
@@ -31,6 +31,12 @@ public class EntryImageAdapter extends RecyclerView.Adapter<EntryImageAdapter.Im
         this.context = context;
         this.imageUris = imageUris;
         this.listener = listener;
+    }
+
+    // Add this method to update edit mode state
+    public void setEditMode(boolean editMode) {
+        this.editMode = editMode;
+        notifyDataSetChanged(); // Refresh all views
     }
 
     @NonNull
@@ -50,6 +56,9 @@ public class EntryImageAdapter extends RecyclerView.Adapter<EntryImageAdapter.Im
                 .resize(240, 240)
                 .centerCrop()
                 .into(holder.ivEntryImage);
+
+        // Only show remove button in edit mode
+        holder.btnRemoveImage.setVisibility(editMode ? View.VISIBLE : View.GONE);
 
         // Set click listener for remove button
         holder.btnRemoveImage.setOnClickListener(v -> {

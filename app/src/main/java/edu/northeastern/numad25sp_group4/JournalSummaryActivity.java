@@ -198,11 +198,9 @@ public class JournalSummaryActivity extends AppCompatActivity implements EntryIm
             }
         }
 
-        // Check if we're editing an existing entry
+        // Check if we're editing an existing entry - NOTE: entryeditactivity does this instead
         if (currentEntry == null && getIntent().hasExtra("ENTRY_ID")) {
             String entryId = getIntent().getStringExtra("ENTRY_ID");
-            // TODO: Load the entry from Firebase
-            // For now, create a new entry with the ID
             currentEntry = new EmotionEntry();
             currentEntry.setEntryId(entryId);
         } else if (currentEntry == null && getIntent().hasExtra("EMOTION")) {
@@ -1195,36 +1193,36 @@ public class JournalSummaryActivity extends AppCompatActivity implements EntryIm
             String userId = firebaseHelper.getCurrentUser().getUid();
             String filename = "image_" + System.currentTimeMillis() + "_" + imageIndex + ".jpg";
 
-            // Upload image to Firebase Storage
-            UploadTask uploadTask = firebaseHelper.uploadImage(userId, imageData);
-
-            // This is a simplified version - you may need to adjust to match the actual implementation
+            // Create a direct reference to Firebase Storage
             StorageReference imageRef = FirebaseStorage.getInstance().getReference()
                     .child("images")
                     .child(userId)
                     .child(filename);
 
-            uploadTask.continueWithTask(task -> {
-                if (!task.isSuccessful()) {
-                    throw task.getException();
-                }
-                // Get the download URL
-                return imageRef.getDownloadUrl();
-            }).addOnCompleteListener(task -> {
-                if (task.isSuccessful()) {
-                    Uri downloadUri = task.getResult();
-                    if (downloadUri != null) {
-                        imageUrls.add(downloadUri.toString());
-                    }
-                }
+            // Upload directly and get the URL in one continuous operation
+            imageRef.putBytes(imageData)
+                    .continueWithTask(task -> {
+                        if (!task.isSuccessful()) {
+                            throw task.getException();
+                        }
+                        // Get the download URL from the same reference
+                        return imageRef.getDownloadUrl();
+                    })
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                            Uri downloadUri = task.getResult();
+                            if (downloadUri != null) {
+                                imageUrls.add(downloadUri.toString());
+                            }
+                        }
 
-                uploadCount[0]++;
-                if (uploadCount[0] >= totalImages) {
-                    // All uploads complete
-                    currentEntry.setImageUrls(imageUrls);
-                    saveEntryToFirebase();
-                }
-            });
+                        uploadCount[0]++;
+                        if (uploadCount[0] >= totalImages) {
+                            // All uploads complete
+                            currentEntry.setImageUrls(imageUrls);
+                            saveEntryToFirebase();
+                        }
+                    });
         }
     }
 
