@@ -2,6 +2,7 @@ package edu.northeastern.numad25sp_group4;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -23,13 +24,15 @@ import utils.FirebaseHelper;
  */
 public class TutorialActivity extends AppCompatActivity {
 
+    private static final String TAG = "TutorialActivity";
     private ViewPager2 viewPager;
-    private View[] carouselIndicators;
     private ImageView ivNextArrow, ivBackArrow;
     private Button btnGetStarted;
     private View progressDot1, progressDot2, progressDot3;
     private FirebaseHelper firebaseHelper;
     private TutorialPagerAdapter adapter;
+    private ImageView ivCarouselPrev, ivCarouselNext;
+
 
     private final int TOTAL_SLIDES = 4;
 
@@ -53,13 +56,6 @@ public class TutorialActivity extends AppCompatActivity {
     private void initViews() {
         viewPager = findViewById(R.id.viewpager_tutorial);
 
-        // Carousel indicators
-        carouselIndicators = new View[TOTAL_SLIDES];
-        carouselIndicators[0] = findViewById(R.id.indicator_1);
-        carouselIndicators[1] = findViewById(R.id.indicator_2);
-        carouselIndicators[2] = findViewById(R.id.indicator_3);
-        carouselIndicators[3] = findViewById(R.id.indicator_4);
-
         // Navigation
         ivNextArrow = findViewById(R.id.iv_next_arrow);
         ivBackArrow = findViewById(R.id.iv_back_arrow);
@@ -69,67 +65,50 @@ public class TutorialActivity extends AppCompatActivity {
         progressDot1 = findViewById(R.id.progress_dot_1);
         progressDot2 = findViewById(R.id.progress_dot_2);
         progressDot3 = findViewById(R.id.progress_dot_3);
+
+        ivCarouselPrev = findViewById(R.id.iv_carousel_prev);
+        ivCarouselNext = findViewById(R.id.iv_carousel_next);
     }
 
     private void setupCarousel() {
-        // Create tutorial slides
-        List<TutorialPagerAdapter.TutorialSlide> slides = new ArrayList<>();
+        try {
+            // Create tutorial slides
+            List<TutorialPagerAdapter.TutorialSlide> slides = new ArrayList<>();
 
-       // TODO
-        slides.add(new TutorialPagerAdapter.TutorialSlide(
-                R.drawable.carousel_one_log_emotion,
-                "1.",
-                "Tap log emotion button on the home page"));
+            // Add slides
+            slides.add(new TutorialPagerAdapter.TutorialSlide(R.drawable.carousel_one_log_emotion));
+            slides.add(new TutorialPagerAdapter.TutorialSlide(R.drawable.carousel_two_primary_emotion));
+            slides.add(new TutorialPagerAdapter.TutorialSlide(R.drawable.carousel_three_journal_summary));
+            slides.add(new TutorialPagerAdapter.TutorialSlide(R.drawable.carousel_four_analytics_tab));
 
-        slides.add(new TutorialPagerAdapter.TutorialSlide(
-                R.drawable.carousel_one_log_emotion,
-                //R.drawable.carousel_two_select_emotion,
-                "2.",
-                "Select how you're feeling currently"));
 
-        slides.add(new TutorialPagerAdapter.TutorialSlide(
-                R.drawable.carousel_one_log_emotion,
-                //R.drawable.carousel_three_journal_entry,
-                "3.",
-                "Optionally, attach a journal entry, images, text, or tags to your MindfulJot entry"));
+            // Set up adapter
+            adapter = new TutorialPagerAdapter(this, slides);
+            viewPager.setAdapter(adapter);
 
-        slides.add(new TutorialPagerAdapter.TutorialSlide(
-                R.drawable.carousel_one_log_emotion,
-                //R.drawable.carousel_four_view_entries,
-                "4.",
-                "You're done! Look back on your old entries in the Entries tab, or your emotion trends in the Analytics tab"));
+            // Important - set orientation to horizontal
+            viewPager.setOrientation(ViewPager2.ORIENTATION_HORIZONTAL);
 
-        // Set up adapter
-        adapter = new adapters.TutorialPagerAdapter(this, slides);
-        viewPager.setAdapter(adapter);
+            // Set up ViewPager callback
+            viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+                @Override
+                public void onPageSelected(int position) {
+                    super.onPageSelected(position);
 
-        // Set initial indicator
-        updateCarouselIndicators(0);
-
-        // Set up ViewPager callback
-        viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
-            @Override
-            public void onPageSelected(int position) {
-                super.onPageSelected(position);
-                updateCarouselIndicators(position);
-
-                // Show Get Started button on last slide
-                if (position == TOTAL_SLIDES - 1) {
-                    ivNextArrow.setVisibility(View.INVISIBLE);
-                    btnGetStarted.setVisibility(View.VISIBLE);
-                } else {
-                    ivNextArrow.setVisibility(View.VISIBLE);
-                    btnGetStarted.setVisibility(View.INVISIBLE);
+                    // Show Get Started button on last slide
+                    if (position == TOTAL_SLIDES - 1) {
+                        ivNextArrow.setVisibility(View.INVISIBLE);
+                        btnGetStarted.setVisibility(View.VISIBLE);
+                    } else {
+                        ivNextArrow.setVisibility(View.VISIBLE);
+                        btnGetStarted.setVisibility(View.INVISIBLE);
+                    }
                 }
-            }
-        });
-    }
-
-    private void updateCarouselIndicators(int position) {
-        // Update carousel indicators
-        for (int i = 0; i < TOTAL_SLIDES; i++) {
-            carouselIndicators[i].setBackgroundResource(
-                    i == position ? R.drawable.carousel_indicator_active : R.drawable.carousel_indicator_inactive);
+            });
+        } catch (Exception e) {
+            Log.e(TAG, "Error setting up carousel: " + e.getMessage());
+            e.printStackTrace();
+            Toast.makeText(this, "Error loading tutorial slides", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -142,15 +121,11 @@ public class TutorialActivity extends AppCompatActivity {
             }
         });
 
-        // Back arrow - go back in carousel or to previous screen
+        // Back arrow - go to previous screen
         ivBackArrow.setOnClickListener(v -> {
-            int currentPosition = viewPager.getCurrentItem();
-            if (currentPosition > 0) {
-                viewPager.setCurrentItem(currentPosition - 1);
-            } else {
-                // Go back to notifications screen
-                finish();
-            }
+            Intent intent = new Intent(TutorialActivity.this, NotificationsActivity.class);
+            startActivity(intent);
+            finish();
         });
 
         // Get Started button - complete onboarding
@@ -161,6 +136,21 @@ public class TutorialActivity extends AppCompatActivity {
             // Navigate to the home screen
             navigateToHome();
         });
+
+        ivCarouselPrev.setOnClickListener(v -> {
+            int currentPosition = viewPager.getCurrentItem();
+            if (currentPosition > 0) {
+                viewPager.setCurrentItem(currentPosition - 1);
+            }
+        });
+
+        ivCarouselNext.setOnClickListener(v -> {
+            int currentPosition = viewPager.getCurrentItem();
+            if (currentPosition < TOTAL_SLIDES - 1) {
+                viewPager.setCurrentItem(currentPosition + 1);
+            }
+        });
+
     }
 
     private void markTutorialCompleted() {

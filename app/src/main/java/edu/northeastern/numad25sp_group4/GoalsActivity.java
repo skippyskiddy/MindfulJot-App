@@ -27,6 +27,7 @@ public class GoalsActivity extends AppCompatActivity {
     private ImageView ivPatternsCheck;
     private ImageView ivStressCheck;
     private ImageView ivNextArrow;
+    private ImageView ivBackArrow;
     private View progressDot1, progressDot2, progressDot3;
 
     private FirebaseHelper firebaseHelper;
@@ -56,6 +57,8 @@ public class GoalsActivity extends AppCompatActivity {
         ivStressCheck = findViewById(R.id.iv_stress_check);
 
         ivNextArrow = findViewById(R.id.iv_next_arrow);
+        ivBackArrow = findViewById(R.id.iv_back_arrow);
+
 
         progressDot1 = findViewById(R.id.progress_dot_1);
         progressDot2 = findViewById(R.id.progress_dot_2);
@@ -99,6 +102,13 @@ public class GoalsActivity extends AppCompatActivity {
                 Intent intent = new Intent(GoalsActivity.this, NotificationsActivity.class);
                 startActivity(intent);
             }
+        });
+
+        ivBackArrow.setOnClickListener(v -> {
+            // Navigate back to welcome screen
+            Intent intent = new Intent(GoalsActivity.this, WelcomeActivity.class);
+            startActivity(intent);
+            finish();
         });
     }
 

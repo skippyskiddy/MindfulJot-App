@@ -46,6 +46,11 @@ public class NotificationsActivity extends AppCompatActivity {
                 } else {
                     // Permission denied, inform the user but still continue
                     Toast.makeText(this, "Notifications will be disabled", Toast.LENGTH_SHORT).show();
+
+                    // Force set to none since permission was denied
+                    selectedPreference = "none";
+                    saveNotificationPreference();
+
                     navigateToTutorial();
                 }
             });
@@ -134,6 +139,7 @@ public class NotificationsActivity extends AppCompatActivity {
                 } else {
                     // No need for permissions, navigate directly
                     navigateToTutorial();
+
                 }
             }
         });
@@ -239,8 +245,15 @@ public class NotificationsActivity extends AppCompatActivity {
         }
     }
 
+
     private void navigateToTutorial() {
+        // Log for debugging
+        android.util.Log.d("NavigationFlow", "Navigating from Notifications to Tutorial");
+
+        // Use NEW_TASK and CLEAR_TASK to clear the entire activity stack
         Intent intent = new Intent(NotificationsActivity.this, TutorialActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
+        finish();
     }
 }
