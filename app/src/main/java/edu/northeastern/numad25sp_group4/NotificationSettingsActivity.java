@@ -1,15 +1,26 @@
 package edu.northeastern.numad25sp_group4;
 
+import android.Manifest;
+import android.app.AlertDialog;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.google.android.material.card.MaterialCardView;
 import com.google.firebase.database.DataSnapshot;
@@ -21,9 +32,12 @@ import java.util.Map;
 
 import utils.FirebaseHelper;
 import utils.LoginManager;
+import utils.NotificationHelper;
 import utils.NotificationScheduler;
 
 public class NotificationSettingsActivity extends AppCompatActivity {
+
+    private static final String TAG = "NotificationSettings";
 
     private MaterialCardView cardOnceDaily, cardTwiceDaily, cardThreeTimes, cardNoReminders;
     private ImageView ivOnceCheck, ivTwiceCheck, ivThreeCheck, ivNoCheck;
@@ -52,6 +66,9 @@ public class NotificationSettingsActivity extends AppCompatActivity {
 
         // Set up listeners
         setupListeners();
+
+        // Create notification channel
+        NotificationHelper.createNotificationChannel(this);
     }
 
     private void initViews() {
@@ -67,6 +84,10 @@ public class NotificationSettingsActivity extends AppCompatActivity {
 
         btnSaveSettings = findViewById(R.id.btn_save_settings);
         btnBack = findViewById(R.id.btn_back);
+
+//        // Test buttons
+//        btnTestImmediate = findViewById(R.id.btn_test_immediate);
+//        btnTestDelayed = findViewById(R.id.btn_test_delayed);
     }
 
     private void loadCurrentPreference() {
@@ -166,6 +187,81 @@ public class NotificationSettingsActivity extends AppCompatActivity {
         // Save button click listener
         btnSaveSettings.setOnClickListener(v -> savePreference());
     }
+
+//        // Test buttons listeners
+//        btnTestImmediate.setOnClickListener(v -> {
+//            // Check for notification permission
+//            checkNotificationPermission(true);
+//        });
+//
+//        btnTestDelayed.setOnClickListener(v -> {
+//            // Check for notification permission
+//            checkNotificationPermission(false);
+//        });
+
+
+//
+//    private void testImmediateNotification() {
+//        Log.d(TAG, "Testing immediate notification");
+//        String userName = loginManager.getUserName(this);
+//        if (userName.isEmpty() && firebaseHelper.getCurrentUser() != null) {
+//            // Try to get from Firebase
+//            firebaseHelper.getUserData(firebaseHelper.getCurrentUser().getUid(),
+//                    new ValueEventListener() {
+//                        @Override
+//                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+//                            if (snapshot.exists()) {
+//                                String name = snapshot.child("name").getValue(String.class);
+//                                NotificationTester.testNotificationImmediate(
+//                                        NotificationSettingsActivity.this,
+//                                        name != null ? name : ""
+//                                );
+//                            }
+//                        }
+//
+//                        @Override
+//                        public void onCancelled(@NonNull DatabaseError error) {
+//                            NotificationTester.testNotificationImmediate(
+//                                    NotificationSettingsActivity.this,
+//                                    ""
+//                            );
+//                        }
+//                    });
+//        } else {
+//            NotificationTester.testNotificationImmediate(this, userName);
+//        }
+//    }
+//
+//    private void testDelayedNotification() {
+//        Log.d(TAG, "Testing delayed notification");
+//        String userName = loginManager.getUserName(this);
+//        if (userName.isEmpty() && firebaseHelper.getCurrentUser() != null) {
+//            // Try to get from Firebase
+//            firebaseHelper.getUserData(firebaseHelper.getCurrentUser().getUid(),
+//                    new ValueEventListener() {
+//                        @Override
+//                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+//                            if (snapshot.exists()) {
+//                                String name = snapshot.child("name").getValue(String.class);
+//                                NotificationTester.testNotificationWithDelay(
+//                                        NotificationSettingsActivity.this,
+//                                        name != null ? name : ""
+//                                );
+//                            }
+//                        }
+//
+//                        @Override
+//                        public void onCancelled(@NonNull DatabaseError error) {
+//                            NotificationTester.testNotificationWithDelay(
+//                                    NotificationSettingsActivity.this,
+//                                    ""
+//                            );
+//                        }
+//                    });
+//        } else {
+//            NotificationTester.testNotificationWithDelay(this, userName);
+//        }
+//    }
 
     private void savePreference() {
         // If preference hasn't changed, just return

@@ -19,14 +19,25 @@ public class AlarmReceiver extends BroadcastReceiver {
         // Get user name from intent
         String userName = intent.getStringExtra("user_name");
 
-        // Show the notification
-        NotificationHelper.showNotification(context, userName);
-
-        // Reschedule the next notification based on notification type
-        String notificationType = intent.getStringExtra("notification_type");
-        if (notificationType != null) {
-            // This will reschedule today's notifications if we haven't shown them all yet
-            NotificationScheduler.scheduleNotifications(context, notificationType, userName);
-        }
+//        // Check if this is a test notification
+//        boolean isTestNotification = intent.getBooleanExtra("test_notification", false);
+//
+//        if (isTestNotification) {
+//            Log.d(TAG, "Handling TEST notification alarm");
+//        } else {
+//            Log.d(TAG, "Handling REGULAR notification alarm");
+//        }
+//
+//        // Show the notification
+//        NotificationHelper.showNotification(context, userName);
+//
+//        // If not a test notification, reschedule the next notification based on notification type
+//        if (!isTestNotification) {
+//            String notificationType = intent.getStringExtra("notification_type");
+//            if (notificationType != null) {
+//                // This will reschedule today's notifications if we haven't shown them all yet
+//                NotificationScheduler.scheduleNotifications(context, notificationType, userName);
+//            }
+//        }
     }
 }

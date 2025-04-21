@@ -1,3 +1,39 @@
-<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="white"/>
-</svg>
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Notepad outline -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M18,3H6C4.9,3,4,3.9,4,5v14c0,1.1,0.9,2,2,2h12c1.1,0,2-0.9,2-2V5C20,3.9,19.1,3,18,3z M18,19H6V5h12V19z" />
+
+    <!-- Binding rings at top -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M9,4C8.45,4,8,4.45,8,5C8,5.55,8.45,6,9,6C9.55,6,10,5.55,10,5C10,4.45,9.55,4,9,4z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M12,4C11.45,4,11,4.45,11,5C11,5.55,11.45,6,12,6C12.55,6,13,5.55,13,5C13,4.45,12.55,4,12,4z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M15,4C14.45,4,14,4.45,14,5C14,5.55,14.45,6,15,6C15.55,6,16,5.55,16,5C16,4.45,15.55,4,15,4z" />
+
+    <!-- Simplified smiley face -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M12,8.5c-2.5,0-4.5,2-4.5,4.5c0,2.5,2,4.5,4.5,4.5c2.5,0,4.5-2,4.5-4.5C16.5,10.5,14.5,8.5,12,8.5z" />
+
+    <!-- Eyes and smile (transparent cutouts) -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M10,11.5c-0.4,0-0.7,0.3-0.7,0.7c0,0.4,0.3,0.7,0.7,0.7c0.4,0,0.7-0.3,0.7-0.7C10.7,11.8,10.4,11.5,10,11.5z" />
+    <path
+        android:fillColor="#000000"
+        android:pathData="M14,11.5c-0.4,0-0.7,0.3-0.7,0.7c0,0.4,0.3,0.7,0.7,0.7c0.4,0,0.7-0.3,0.7-0.7C14.7,11.8,14.4,11.5,14,11.5z" />
+    <path
+        android:fillColor="#000000"
+        android:pathData="M9.5,14c0,1.4,1.1,2.5,2.5,2.5c1.4,0,2.5-1.1,2.5-2.5H9.5z" />
+</vector>
