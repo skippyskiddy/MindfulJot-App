@@ -19,6 +19,8 @@ import java.util.List;
 
 import edu.northeastern.numad25sp_group4.R;
 import models.Emotion;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.Color;
 
 public class EmotionAdapter extends RecyclerView.Adapter<EmotionAdapter.EmotionViewHolder> {
 
@@ -144,7 +146,6 @@ public class EmotionAdapter extends RecyclerView.Adapter<EmotionAdapter.EmotionV
     }
 
     private void showDefinitionTooltip(View anchorView, Emotion emotion) {
-        Log.d(TAG, "Showing tooltip for emotion: " + emotion.getName());
         // Create popup layout
         View tooltipView = LayoutInflater.from(context).inflate(R.layout.layout_emotion_tooltip, null);
 
@@ -155,27 +156,9 @@ public class EmotionAdapter extends RecyclerView.Adapter<EmotionAdapter.EmotionV
         tvEmotionName.setText(emotion.getName());
         tvDefinition.setText(emotion.getDefinition());
 
-        // Apply themed text color based on category
-        int textColorRes;
-        switch (emotion.getCategory()) {
-            case HIGH_ENERGY_PLEASANT:
-                textColorRes = 0x5F5000; // Dark yellow/brown
-                break;
-            case HIGH_ENERGY_UNPLEASANT:
-                textColorRes = 0x8E2020; // Dark red
-                break;
-            case LOW_ENERGY_PLEASANT:
-                textColorRes = 0x0F5B0F; // Dark green
-                break;
-            case LOW_ENERGY_UNPLEASANT:
-                textColorRes = 0x004975; // Dark blue
-                break;
-            default:
-                textColorRes = 0xFFFFFF; // White
-        }
-        tvEmotionName.setTextColor(textColorRes);
+        // Apply text color (keep your existing color logic here)
 
-        // Create and show popup
+        // Create and configure popup
         final PopupWindow popupWindow = new PopupWindow(
                 tooltipView,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -183,13 +166,28 @@ public class EmotionAdapter extends RecyclerView.Adapter<EmotionAdapter.EmotionV
                 true
         );
 
-        // Show above the anchor view
-        popupWindow.showAsDropDown(anchorView, 0, -anchorView.getHeight() * 2, Gravity.CENTER);
+        // Set a transparent background to prevent default padding
+        popupWindow.setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
 
-        // Dismiss when clicked
+        // Enable overlap with anchor (important!)
+        popupWindow.setOverlapAnchor(true);
+
+        // Measure tooltip to get actual dimensions
+        tooltipView.measure(
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+        );
+
+        int tooltipHeight = tooltipView.getMeasuredHeight();
+
+        // Calculate position to appear directly above anchor with no gap
+        int yOffset = -(tooltipHeight);
+
+        // Show popup
+        popupWindow.showAsDropDown(anchorView, 0, yOffset, Gravity.CENTER);
+
+        // Dismiss logic (keep your existing code)
         tooltipView.setOnClickListener(v -> popupWindow.dismiss());
-
-        // Auto dismiss after 3 seconds
         tooltipView.postDelayed(popupWindow::dismiss, 3000);
     }
 

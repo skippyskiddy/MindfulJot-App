@@ -215,11 +215,6 @@ public class SpecificEmotionActivity extends AppCompatActivity implements Emotio
         recyclerEmotions.setHasFixedSize(false);
         recyclerEmotions.setItemAnimator(new DefaultItemAnimator());
 
-        // Add divider decoration for visual separation
-        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(
-                recyclerEmotions.getContext(), layoutManager.getOrientation());
-        recyclerEmotions.addItemDecoration(dividerItemDecoration);
-
         // Enable scrolling features
         recyclerEmotions.setNestedScrollingEnabled(true);
         recyclerEmotions.setVerticalScrollBarEnabled(true);
