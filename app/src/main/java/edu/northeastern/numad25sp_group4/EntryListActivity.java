@@ -1,6 +1,8 @@
 package edu.northeastern.numad25sp_group4;
 
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -171,10 +173,10 @@ public class EntryListActivity extends AppCompatActivity {
                 EmotionEntry entryToDelete = emotionEntries.get(position);
 
                 // Show confirmation dialog
-                new AlertDialog.Builder(EntryListActivity.this)
+                AlertDialog dialog = new AlertDialog.Builder(EntryListActivity.this)
                         .setTitle("Delete Entry")
                         .setMessage("Are you sure you want to delete this entry?")
-                        .setPositiveButton("Delete", (dialog, which) -> {
+                        .setPositiveButton("Delete", (dialogInterface, which) -> {
                             // Remove from DB and list
                             firebaseHelper.deleteEntry(entryToDelete, new FirebaseHelper.EntryDeleteCallback() {
                                 @Override
@@ -192,12 +194,27 @@ public class EntryListActivity extends AppCompatActivity {
                                 }
                             });
                         })
-                        .setNegativeButton("Cancel", (dialog, which) -> {
+                        .setNegativeButton("Cancel", (dialogInterface, which) -> {
                             adapter.notifyItemChanged(position); // Restore if canceled
-                            dialog.dismiss();
+                            dialogInterface.dismiss();
                         })
                         .setCancelable(false)
-                        .show();
+                        .create();
+
+                // Ensure dialog text is visible in all themes
+                dialog.setOnShowListener(dialogInterface -> {
+                    TextView titleView = dialog.findViewById(android.R.id.title);
+                    TextView messageView = dialog.findViewById(android.R.id.message);
+
+                    if (titleView != null) {
+                        titleView.setTextColor(Color.BLACK);
+                    }
+
+                    if (messageView != null) {
+                        messageView.setTextColor(Color.BLACK);
+                    }
+                });
+                dialog.show();
             }
         };
 
