@@ -279,8 +279,8 @@ public class AnalyticsActivity extends AppCompatActivity implements BottomNaviga
             }
         });
 
-        ArrayAdapter<Timeframe> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, Timeframe.values());
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        ArrayAdapter<Timeframe> adapter = new ArrayAdapter<>(this, R.layout.spinner_item_white, Timeframe.values());
+        adapter.setDropDownViewResource(R.layout.spinner_dropdown_item_white);
         spinnerTimeframe.setAdapter(adapter);
     }
 
