@@ -3,6 +3,7 @@ package edu.northeastern.numad25sp_group4;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
@@ -762,7 +763,7 @@ public class EntryEditActivity extends AppCompatActivity implements EntryImageAd
 
 
     private void showDeleteConfirmationDialog() {
-        new AlertDialog.Builder(this)
+        AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle("Delete Entry")
                 .setMessage("Are you sure you want to delete this entry?")
                 .setPositiveButton("Delete", new DialogInterface.OnClickListener() {
@@ -772,7 +773,26 @@ public class EntryEditActivity extends AppCompatActivity implements EntryImageAd
                     }
                 })
                 .setNegativeButton("Cancel", null)
-                .show();
+                .create();
+
+        // Ensure dialog text is visible in all themes
+        dialog.setOnShowListener(new DialogInterface.OnShowListener() {
+            @Override
+            public void onShow(DialogInterface dialogInterface) {
+                TextView titleView = dialog.findViewById(android.R.id.title);
+                TextView messageView = dialog.findViewById(android.R.id.message);
+
+                if (titleView != null) {
+                    titleView.setTextColor(Color.BLACK);
+                }
+
+                if (messageView != null) {
+                    messageView.setTextColor(Color.BLACK);
+                }
+            }
+        });
+
+        dialog.show();
     }
 
     private void deleteEntry() {
