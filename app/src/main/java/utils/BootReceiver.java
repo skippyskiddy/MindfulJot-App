@@ -20,10 +20,25 @@ public class BootReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        if (intent.getAction() != null &&
-                intent.getAction().equals(Intent.ACTION_BOOT_COMPLETED)) {
+        String action = intent.getAction();
+        Log.d(TAG, "BootReceiver received action: " + action);
 
-            Log.d(TAG, "Device booted, rescheduling notifications");
+        if (action != null && (
+                action.equals(Intent.ACTION_BOOT_COMPLETED) ||
+                        action.equals(Intent.ACTION_MY_PACKAGE_REPLACED) ||
+                        action.equals(Intent.ACTION_LOCKED_BOOT_COMPLETED) ||
+                        action.equals("android.intent.action.QUICKBOOT_POWERON"))) {  // For some Xiaomi devices
+
+            Log.d(TAG, "Device booted or app updated, rescheduling notifications");
+
+            // Check if we have notification permissions
+            if (!NotificationHelper.canShowNotifications(context)) {
+                Log.e(TAG, "Cannot reschedule notifications - permissions not granted or channel disabled");
+                return;
+            }
+
+            // Create notification channel
+            NotificationHelper.createNotificationChannel(context);
 
             // Check if user is logged in
             FirebaseAuth auth = FirebaseAuth.getInstance();
@@ -42,9 +57,15 @@ public class BootReceiver extends BroadcastReceiver {
                             String name = snapshot.child("name").getValue(String.class);
 
                             if (preference != null && !preference.equals("none")) {
-                                Log.d(TAG, "Found notification preference: " + preference);
+                                Log.d(TAG, "Found notification preference: " + preference + ", name: " + name);
+
+                                // Reschedule the notifications
                                 NotificationScheduler.scheduleNotifications(context, preference, name);
+                            } else {
+                                Log.d(TAG, "User has notification preference set to none or null");
                             }
+                        } else {
+                            Log.d(TAG, "User data not found in Firebase");
                         }
                     }
 
@@ -53,6 +74,8 @@ public class BootReceiver extends BroadcastReceiver {
                         Log.e(TAG, "Error getting user data: " + error.getMessage());
                     }
                 });
+            } else {
+                Log.d(TAG, "No user is logged in, skipping notification scheduling");
             }
         }
     }

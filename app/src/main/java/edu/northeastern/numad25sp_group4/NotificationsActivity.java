@@ -1,22 +1,17 @@
 package edu.northeastern.numad25sp_group4;
 
-import android.Manifest;
-import android.app.AlertDialog;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
-import androidx.core.app.ActivityCompat;
-
 
 import com.google.android.material.card.MaterialCardView;
 
@@ -24,43 +19,34 @@ import java.util.HashMap;
 import java.util.Map;
 
 import utils.FirebaseHelper;
-import utils.NotificationScheduler;
 import utils.NotificationHelper;
-import utils.LoginManager;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.ValueEventListener;
+import utils.NotificationPermissionHandler;
+import utils.NotificationScheduler;
 
 /**
- * Second onboarding screen - asks for notification preferences
+ * Second onboarding screen - asks about notification preferences
  */
 public class NotificationsActivity extends AppCompatActivity {
 
-    private MaterialCardView cardOnceDaily, cardTwiceDaily, cardThreeTimes, cardNoReminders;
-    private ImageView ivOnceCheck, ivTwiceCheck, ivThreeCheck, ivNoCheck;
-    private ImageView ivNextArrow, ivBackArrow;
+    private static final String TAG = "NotificationsActivity";
+
+    private MaterialCardView cardOnceDaily;
+    private MaterialCardView cardTwiceDaily;
+    private MaterialCardView cardThreeTimes;
+    private MaterialCardView cardNoReminders;
+    private ImageView ivOnceCheck;
+    private ImageView ivTwiceCheck;
+    private ImageView ivThreeCheck;
+    private ImageView ivNoCheck;
+    private ImageView ivNextArrow;
+    private ImageView ivBackArrow;
     private View progressDot1, progressDot2, progressDot3;
+    private TextView tvDescription;
 
     private FirebaseHelper firebaseHelper;
-    private String selectedPreference = "";
+    private String selectedPreference = "none";  // Default is no notifications
 
-    // Permission request launcher for notifications
-    private final ActivityResultLauncher<String> requestPermissionLauncher =
-            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
-                if (isGranted) {
-                    // Permission granted, continue with navigation
-                    navigateToTutorial();
-                } else {
-                    // Permission denied, inform the user but still continue
-                    Toast.makeText(this, "Notifications will be disabled", Toast.LENGTH_SHORT).show();
-
-                    // Force set to none since permission was denied
-                    selectedPreference = "none";
-                    saveNotificationPreference();
-
-                    navigateToTutorial();
-                }
-            });
+    private ActivityResultLauncher<String> requestPermissionLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,6 +54,25 @@ public class NotificationsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_onboarding_notifications);
 
         firebaseHelper = FirebaseHelper.getInstance();
+
+        // Set up notification channel
+        NotificationHelper.createNotificationChannel(this);
+
+        // Initialize permission launcher
+        requestPermissionLauncher = registerForActivityResult(
+                new ActivityResultContracts.RequestPermission(),
+                isGranted -> {
+                    if (isGranted) {
+                        Log.d(TAG, "Notification permission granted");
+                        // Check exact alarm permission if needed
+                        NotificationPermissionHandler.checkExactAlarmPermission(this);
+                    } else {
+                        Log.d(TAG, "Notification permission denied");
+                        Toast.makeText(this,
+                                "Notifications disabled. You can enable them later in settings.",
+                                Toast.LENGTH_LONG).show();
+                    }
+                });
 
         // Initialize views
         initViews();
@@ -77,35 +82,36 @@ public class NotificationsActivity extends AppCompatActivity {
     }
 
     private void initViews() {
-        // Cards
         cardOnceDaily = findViewById(R.id.card_once_daily);
         cardTwiceDaily = findViewById(R.id.card_twice_daily);
         cardThreeTimes = findViewById(R.id.card_three_times);
         cardNoReminders = findViewById(R.id.card_no_reminders);
 
-        // Check marks
         ivOnceCheck = findViewById(R.id.iv_once_check);
         ivTwiceCheck = findViewById(R.id.iv_twice_check);
         ivThreeCheck = findViewById(R.id.iv_three_check);
         ivNoCheck = findViewById(R.id.iv_no_check);
 
-        // Navigation
         ivNextArrow = findViewById(R.id.iv_next_arrow);
         ivBackArrow = findViewById(R.id.iv_back_arrow);
 
-        // Progress dots
         progressDot1 = findViewById(R.id.progress_dot_1);
         progressDot2 = findViewById(R.id.progress_dot_2);
         progressDot3 = findViewById(R.id.progress_dot_3);
+
+        tvDescription = findViewById(R.id.tv_notification_description);
 
         // Initially hide check icons and set next arrow to partially transparent
         ivOnceCheck.setVisibility(View.INVISIBLE);
         ivTwiceCheck.setVisibility(View.INVISIBLE);
         ivThreeCheck.setVisibility(View.INVISIBLE);
         ivNoCheck.setVisibility(View.INVISIBLE);
-
         ivNextArrow.setAlpha(0.5f);
         ivNextArrow.setEnabled(false);
+
+        // Set "None" as the default selected option
+        selectedPreference = "none";
+        updateCardSelection(cardNoReminders, ivNoCheck);
     }
 
     private void setupListeners() {
@@ -134,25 +140,25 @@ public class NotificationsActivity extends AppCompatActivity {
             resetOtherCards(cardNoReminders);
         });
 
-        // Set up navigation listeners
+        // Next arrow click listener
         ivNextArrow.setOnClickListener(v -> {
-            if (!selectedPreference.isEmpty()) {
-                // Save notification preference
-                saveNotificationPreference();
+            // Save notification preference
+            saveNotificationPreference();
 
-                // Check if we need to request notification permissions
-                if (!selectedPreference.equals("none")) {
-                    requestNotificationPermission();
-                } else {
-                    // No need for permissions, navigate directly
-                    navigateToTutorial();
-
-                }
+            // Request notification permission if needed (and if not "none")
+            if (!selectedPreference.equals("none")) {
+                requestNotificationPermission();
             }
+
+            // Navigate to next onboarding screen (Tutorial)
+            Intent intent = new Intent(NotificationsActivity.this, TutorialActivity.class);
+            startActivity(intent);
         });
 
         ivBackArrow.setOnClickListener(v -> {
-            // Navigate back to the goals screen
+            // Navigate back to goals screen
+            Intent intent = new Intent(NotificationsActivity.this, GoalsActivity.class);
+            startActivity(intent);
             finish();
         });
     }
@@ -203,118 +209,59 @@ public class NotificationsActivity extends AppCompatActivity {
             Map<String, Object> updates = new HashMap<>();
             updates.put("notificationPreference", selectedPreference);
 
+            Log.d(TAG, "Saving notification preference: " + selectedPreference);
+
             firebaseHelper.updateUserData(userId, updates)
                     .addOnSuccessListener(aVoid -> {
-                        // Preference saved successfully
-
-                        // Initialize notifications based on selected preference
-                        initializeNotifications();
+                        Log.d(TAG, "Notification preference saved successfully");
                     })
                     .addOnFailureListener(e -> {
-                        // Failed to save preference
+                        Log.e(TAG, "Failed to save notification preference: " + e.getMessage());
                         Toast.makeText(NotificationsActivity.this,
-                                "Failed to save preference: " + e.getMessage(),
+                                "Failed to save notification preference: " + e.getMessage(),
                                 Toast.LENGTH_SHORT).show();
                     });
         }
     }
-    /**
-     * Initialize notifications based on the selected preference
-     */
-    private void initializeNotifications() {
-        if (selectedPreference.equals("none")) {
-            // No notifications, cancel any existing ones
-            NotificationScheduler.cancelAllNotifications(this);
-            return;
-        }
 
-        // Get the user's name
+    private void requestNotificationPermission() {
+        // Request permission and schedule notifications if needed
+        NotificationPermissionHandler.checkNotificationPermission(this);
+
+        // Also check for exact alarm permission on Android 12+
+        NotificationPermissionHandler.checkExactAlarmPermission(this);
+
+        // Get user name
         String userName = "";
         if (firebaseHelper.getCurrentUser() != null) {
-            // For now, let's use the login manager to get the name if possible
-            userName = LoginManager.getInstance().getUserName(this);
-
-            // If not found in login manager, get from Firebase (will be async so less ideal)
-            if (userName.isEmpty()) {
-                String userId = firebaseHelper.getCurrentUser().getUid();
-                firebaseHelper.getUserData(userId, new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        if (snapshot.exists()) {
-                            String name = snapshot.child("name").getValue(String.class);
-                            if (name != null && !name.isEmpty()) {
-                                // Schedule notifications with the name
-                                NotificationScheduler.scheduleNotifications(
-                                        NotificationsActivity.this,
-                                        selectedPreference,
-                                        name
-                                );
-                            }
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-                        // If we can't get the name, schedule without it
-                        NotificationScheduler.scheduleNotifications(
-                                NotificationsActivity.this,
-                                selectedPreference,
-                                ""
-                        );
-                    }
-                });
-                return;
+            // Try to use email until we get the actual name later
+            userName = firebaseHelper.getCurrentUser().getEmail();
+            if (userName != null && userName.contains("@")) {
+                userName = userName.substring(0, userName.indexOf('@'));
             }
         }
 
-        // Schedule the notifications
+        // Schedule notifications based on preference
         NotificationScheduler.scheduleNotifications(this, selectedPreference, userName);
     }
-    private void requestNotificationPermission() {
-        // For Android 13 (API level 33) and above, use the POST_NOTIFICATIONS permission
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
-                    != PackageManager.PERMISSION_GRANTED) {
 
-                // Check if we should show rationale
-                if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                        Manifest.permission.POST_NOTIFICATIONS)) {
-                    // Show explanation dialog
-                    new AlertDialog.Builder(this)
-                            .setTitle("Notification Permission")
-                            .setMessage("We need permission to send you check-in reminders based on your selected frequency.")
-                            .setPositiveButton("OK", (dialog, which) -> {
-                                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
-                            })
-                            .setNegativeButton("No Thanks", (dialog, which) -> {
-                                // User declined, continue without notifications
-                                navigateToTutorial();
-                            })
-                            .create()
-                            .show();
-                } else {
-                    // No explanation needed, request permission
-                    requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
-                }
-            } else {
-                // Permission already granted
-                navigateToTutorial();
-            }
-        } else {
-            // For Android 12 and below, notifications are enabled by default
-            navigateToTutorial();
-        }
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        // Update the notification description based on current permissions
+        updateNotificationDescription();
     }
 
+    private void updateNotificationDescription() {
+        boolean hasPermission = NotificationHelper.hasNotificationPermission(this);
+        boolean canScheduleExact = NotificationScheduler.canScheduleExactAlarms(this);
 
-    private void navigateToTutorial() {
-        // Log for debugging
-        android.util.Log.d("NavigationFlow", "Navigating from Notifications to Tutorial");
-
-        // Use NEW_TASK and CLEAR_TASK to clear the entire activity stack
-        Intent intent = new Intent(NotificationsActivity.this, TutorialActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
-        finish();
+        if (!hasPermission || !canScheduleExact) {
+            tvDescription.setText("Note: For notifications to work properly, you'll need to grant permission when prompted. " +
+                    "You can change this later in the app settings.");
+        } else {
+            tvDescription.setText("Enabling notifications will allow us to send you reminders based on your preferred frequency.");
+        }
     }
 }

@@ -25,7 +25,7 @@ public class NotificationScheduler {
 
     // Time constants (24-hour format)
     private static final int MORNING_HOUR = 9;
-    private static final int NOON_HOUR = 12;
+    private static final int NOON_HOUR = 13;
     private static final int EVENING_HOUR = 19;
     private static final int ONCE_DAILY_HOUR = 14; // 2 PM for fixed once daily option
 
@@ -37,10 +37,16 @@ public class NotificationScheduler {
      * Schedule notifications based on user preference
      */
     public static void scheduleNotifications(Context context, String preference, String userName) {
-        Log.d(TAG, "Scheduling notifications for preference: " + preference);
+        Log.d(TAG, "Scheduling notifications for preference: " + preference + ", user: " + userName);
 
         // Create the notification channel first (will only take effect on Android 8.0+)
         NotificationHelper.createNotificationChannel(context);
+
+        // Check notification permissions - if not granted, we can't schedule
+        if (!NotificationHelper.canShowNotifications(context)) {
+            Log.e(TAG, "Cannot schedule notifications - permissions not granted or channel disabled");
+            return;
+        }
 
         // Cancel any existing notifications first
         cancelAllNotifications(context);
@@ -58,6 +64,7 @@ public class NotificationScheduler {
                 break;
             case "none":
                 // No notifications, so don't schedule any
+                Log.d(TAG, "User preference is 'none', not scheduling notifications");
                 break;
             default:
                 Log.e(TAG, "Unknown notification preference: " + preference);
@@ -79,6 +86,7 @@ public class NotificationScheduler {
         calendar.set(Calendar.HOUR_OF_DAY, hour);
         calendar.set(Calendar.MINUTE, minute);
         calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
 
         // If time has already passed today, schedule for tomorrow
         if (calendar.getTimeInMillis() <= System.currentTimeMillis()) {
@@ -91,6 +99,8 @@ public class NotificationScheduler {
         Intent intent = new Intent(context, AlarmReceiver.class);
         intent.putExtra("user_name", userName);
         intent.putExtra("notification_type", "once");
+        // Add unique action to ensure the intent is unique
+        intent.setAction("edu.northeastern.numad25sp_group4.ONCE_DAILY_NOTIFICATION");
 
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 context,
@@ -100,22 +110,7 @@ public class NotificationScheduler {
         );
 
         // Schedule the alarm
-        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        if (alarmManager != null) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager.setExactAndAllowWhileIdle(
-                        AlarmManager.RTC_WAKEUP,
-                        calendar.getTimeInMillis(),
-                        pendingIntent
-                );
-            } else {
-                alarmManager.setExact(
-                        AlarmManager.RTC_WAKEUP,
-                        calendar.getTimeInMillis(),
-                        pendingIntent
-                );
-            }
-        }
+        scheduleAlarm(context, calendar.getTimeInMillis(), pendingIntent);
     }
 
     /**
@@ -123,10 +118,12 @@ public class NotificationScheduler {
      */
     private static void scheduleTwiceDailyNotifications(Context context, String userName) {
         // Schedule morning notification
-        scheduleNotificationAt(context, MORNING_HOUR, 0, MORNING_REQUEST_CODE, "twice", userName);
+        scheduleNotificationAt(context, MORNING_HOUR, 0, MORNING_REQUEST_CODE, "twice", userName,
+                "edu.northeastern.numad25sp_group4.MORNING_NOTIFICATION");
 
         // Schedule evening notification
-        scheduleNotificationAt(context, EVENING_HOUR, 0, EVENING_REQUEST_CODE, "twice", userName);
+        scheduleNotificationAt(context, EVENING_HOUR, 0, EVENING_REQUEST_CODE, "twice", userName,
+                "edu.northeastern.numad25sp_group4.EVENING_NOTIFICATION");
     }
 
     /**
@@ -134,24 +131,29 @@ public class NotificationScheduler {
      */
     private static void scheduleThriceDailyNotifications(Context context, String userName) {
         // Schedule morning notification
-        scheduleNotificationAt(context, MORNING_HOUR, 0, MORNING_REQUEST_CODE, "thrice", userName);
+        scheduleNotificationAt(context, MORNING_HOUR, 0, MORNING_REQUEST_CODE, "thrice", userName,
+                "edu.northeastern.numad25sp_group4.MORNING_NOTIFICATION");
 
         // Schedule noon notification
-        scheduleNotificationAt(context, NOON_HOUR, 0, NOON_REQUEST_CODE, "thrice", userName);
+        scheduleNotificationAt(context, NOON_HOUR, 0, NOON_REQUEST_CODE, "thrice", userName,
+                "edu.northeastern.numad25sp_group4.NOON_NOTIFICATION");
 
         // Schedule evening notification
-        scheduleNotificationAt(context, EVENING_HOUR, 0, EVENING_REQUEST_CODE, "thrice", userName);
+        scheduleNotificationAt(context, EVENING_HOUR, 0, EVENING_REQUEST_CODE, "thrice", userName,
+                "edu.northeastern.numad25sp_group4.EVENING_NOTIFICATION");
     }
 
     /**
      * Helper method to schedule a notification at a specific time
      */
     private static void scheduleNotificationAt(Context context, int hour, int minute,
-                                               int requestCode, String notificationType, String userName) {
+                                               int requestCode, String notificationType,
+                                               String userName, String intentAction) {
         Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.HOUR_OF_DAY, hour);
         calendar.set(Calendar.MINUTE, minute);
         calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
 
         // If time has already passed today, schedule for tomorrow
         if (calendar.getTimeInMillis() <= System.currentTimeMillis()) {
@@ -164,6 +166,7 @@ public class NotificationScheduler {
         Intent intent = new Intent(context, AlarmReceiver.class);
         intent.putExtra("user_name", userName);
         intent.putExtra("notification_type", notificationType);
+        intent.setAction(intentAction);
 
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 context,
@@ -173,21 +176,57 @@ public class NotificationScheduler {
         );
 
         // Schedule the alarm
+        scheduleAlarm(context, calendar.getTimeInMillis(), pendingIntent);
+    }
+
+    /**
+     * Helper method to schedule an alarm with the appropriate method for the Android version
+     */
+    private static void scheduleAlarm(Context context, long triggerTimeMillis, PendingIntent pendingIntent) {
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        if (alarmManager != null) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        if (alarmManager == null) {
+            Log.e(TAG, "Could not get AlarmManager service");
+            return;
+        }
+
+        try {
+            // Pick the best method to schedule the alarm based on Android version
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+                    !alarmManager.canScheduleExactAlarms()) {
+                // For Android 12+, we need to check the exact alarm permission
+                Log.w(TAG, "Cannot schedule exact alarms, using inexact method");
+
+                // Fallback to a reasonable alternative
+                alarmManager.setAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP,
+                        triggerTimeMillis,
+                        pendingIntent
+                );
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                // For Android 6.0+
                 alarmManager.setExactAndAllowWhileIdle(
                         AlarmManager.RTC_WAKEUP,
-                        calendar.getTimeInMillis(),
+                        triggerTimeMillis,
                         pendingIntent
                 );
+                Log.d(TAG, "Scheduled exact alarm with setExactAndAllowWhileIdle");
             } else {
+                // For older versions
                 alarmManager.setExact(
                         AlarmManager.RTC_WAKEUP,
-                        calendar.getTimeInMillis(),
+                        triggerTimeMillis,
                         pendingIntent
                 );
+                Log.d(TAG, "Scheduled exact alarm with setExact");
             }
+
+            // Log successful scheduling
+            Calendar cal = Calendar.getInstance();
+            cal.setTimeInMillis(triggerTimeMillis);
+            Log.d(TAG, "Successfully scheduled alarm for: " + cal.getTime());
+
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to schedule alarm: " + e.getMessage());
         }
     }
 
@@ -195,17 +234,20 @@ public class NotificationScheduler {
      * Cancel all scheduled notifications
      */
     public static void cancelAllNotifications(Context context) {
-        cancelNotification(context, MORNING_REQUEST_CODE);
-        cancelNotification(context, NOON_REQUEST_CODE);
-        cancelNotification(context, EVENING_REQUEST_CODE);
-        cancelNotification(context, ONCE_DAILY_REQUEST_CODE);
+        cancelNotification(context, MORNING_REQUEST_CODE, "edu.northeastern.numad25sp_group4.MORNING_NOTIFICATION");
+        cancelNotification(context, NOON_REQUEST_CODE, "edu.northeastern.numad25sp_group4.NOON_NOTIFICATION");
+        cancelNotification(context, EVENING_REQUEST_CODE, "edu.northeastern.numad25sp_group4.EVENING_NOTIFICATION");
+        cancelNotification(context, ONCE_DAILY_REQUEST_CODE, "edu.northeastern.numad25sp_group4.ONCE_DAILY_NOTIFICATION");
+        Log.d(TAG, "Cancelled all scheduled notifications");
     }
 
     /**
      * Cancel a specific notification by request code
      */
-    private static void cancelNotification(Context context, int requestCode) {
+    private static void cancelNotification(Context context, int requestCode, String intentAction) {
         Intent intent = new Intent(context, AlarmReceiver.class);
+        intent.setAction(intentAction);
+
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 context,
                 requestCode,
@@ -215,7 +257,24 @@ public class NotificationScheduler {
 
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (alarmManager != null) {
-            alarmManager.cancel(pendingIntent);
+            try {
+                alarmManager.cancel(pendingIntent);
+                pendingIntent.cancel();
+                Log.d(TAG, "Cancelled notification with request code: " + requestCode);
+            } catch (Exception e) {
+                Log.e(TAG, "Error cancelling notification: " + e.getMessage());
+            }
         }
+    }
+
+    /**
+     * Check if we have permission to schedule exact alarms (Android 12+)
+     */
+    public static boolean canScheduleExactAlarms(Context context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+            return alarmManager != null && alarmManager.canScheduleExactAlarms();
+        }
+        return true; // Permission automatically granted on older Android versions
     }
 }

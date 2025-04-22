@@ -1,13 +1,17 @@
 package utils;
 
+import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Build;
+import android.provider.Settings;
 import android.util.Log;
 
+import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
@@ -20,47 +24,78 @@ import edu.northeastern.numad25sp_group4.R;
 public class NotificationHelper {
 
     private static final String TAG = "NotificationHelper";
-
-    private static final String CHANNEL_ID = "mindfuljot_channel";
+    public static final String CHANNEL_ID = "mindfuljot_channel";
     private static final String CHANNEL_NAME = "MindfulJot Reminders";
     private static final String CHANNEL_DESCRIPTION = "Reminders to log your emotions";
 
     public static final int NOTIFICATION_ID = 1001;
+    private static final int NOTIFICATION_IMPORTANCE = NotificationManager.IMPORTANCE_HIGH;
 
     /**
      * Creates the notification channel for Android 8.0 and higher
      */
     public static void createNotificationChannel(Context context) {
-        Log.d(TAG, "Creating notification channel");
-
         // Create the notification channel only on API 26+ (Android 8.0 and higher)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
                     CHANNEL_ID,
                     CHANNEL_NAME,
-                    NotificationManager.IMPORTANCE_DEFAULT
+                    NOTIFICATION_IMPORTANCE
             );
 
             channel.setDescription(CHANNEL_DESCRIPTION);
+            channel.enableVibration(true);
+            channel.setVibrationPattern(new long[]{0, 250, 250, 250});
+            channel.setBypassDnd(true);
 
             // Register the channel with the system
             NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
             if (notificationManager != null) {
                 notificationManager.createNotificationChannel(channel);
-                Log.d(TAG, "Notification channel created successfully");
-            } else {
-                Log.e(TAG, "NotificationManager is null");
+                Log.d(TAG, "Notification channel created");
             }
-        } else {
-            Log.d(TAG, "Notification channel not needed for this Android version");
         }
+    }
+
+    /**
+     * Check if notification permission is granted for Android 13+ devices
+     */
+    public static boolean hasNotificationPermission(Context context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            return ActivityCompat.checkSelfPermission(context,
+                    Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
+        }
+        return true; // Permission automatically granted on older Android versions
+    }
+
+    /**
+     * Check if the notification channel is enabled by the user
+     */
+    public static boolean isNotificationChannelEnabled(Context context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager manager = context.getSystemService(NotificationManager.class);
+            if (manager != null) {
+                NotificationChannel channel = manager.getNotificationChannel(CHANNEL_ID);
+                if (channel != null) {
+                    return channel.getImportance() != NotificationManager.IMPORTANCE_NONE;
+                }
+            }
+        }
+        return NotificationManagerCompat.from(context).areNotificationsEnabled();
     }
 
     /**
      * Shows a notification to the user
      */
     public static void showNotification(Context context, String userName) {
-        Log.d(TAG, "Showing notification for user: " + userName);
+        // Log the attempt to show a notification
+        Log.d(TAG, "Attempting to show notification for user: " +
+                (userName != null ? userName : "unknown"));
+
+        if (!hasNotificationPermission(context)) {
+            Log.e(TAG, "Notification permission not granted");
+            return;
+        }
 
         // Create intent to open the app when notification is clicked
         Intent intent = new Intent(context, HomeActivity.class);
@@ -84,22 +119,31 @@ public class NotificationHelper {
                 .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle("MindfulJot")
                 .setContentText(message)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setContentIntent(pendingIntent)
+                .setVibrate(new long[]{0, 250, 250, 250})
                 .setAutoCancel(true);
 
         // Show the notification
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
         try {
             notificationManager.notify(NOTIFICATION_ID, builder.build());
-            Log.d(TAG, "Notification sent successfully");
+            Log.d(TAG, "Notification shown successfully");
         } catch (SecurityException e) {
-            // This can happen if the user revoked notification permissions
-            Log.e(TAG, "Security exception when showing notification: " + e.getMessage());
-            e.printStackTrace();
+            Log.e(TAG, "Failed to show notification due to permission: " + e.getMessage());
         } catch (Exception e) {
-            Log.e(TAG, "Exception when showing notification: " + e.getMessage());
-            e.printStackTrace();
+            Log.e(TAG, "Failed to show notification: " + e.getMessage());
         }
+    }
+
+    /**
+     * Check if the device has notification permission and notification channels enabled
+     */
+    public static boolean canShowNotifications(Context context) {
+        boolean hasPermission = hasNotificationPermission(context);
+        boolean channelEnabled = isNotificationChannelEnabled(context);
+        Log.d(TAG, "Can show notifications: permission=" + hasPermission +
+                ", channel enabled=" + channelEnabled);
+        return hasPermission && channelEnabled;
     }
 }
