@@ -210,53 +210,44 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationV
             greeting = "Good evening";
         }
 
-        // Get user name from LoginManager
-        String userName = loginManager.getUserName(this);
-
-        // If user name is empty, try to fetch it from Firebase
-        if (userName.isEmpty() && userId != null) {
-            fetchUserName();
+        // Always display what we have in LoginManager as a placeholder
+        String tempUserName = loginManager.getUserName(this);
+        if (!tempUserName.isEmpty()) {
+            tvGreeting.setText(greeting + ", " + tempUserName);
         } else {
-            tvGreeting.setText(greeting + ", " + userName);
+            tvGreeting.setText(greeting + "!");
+        }
+
+        // Always fetch the latest name from Firebase to ensure we have the correct data
+        if (userId != null) {
+            fetchUserName(greeting);
         }
     }
 
     /**
-     * Fetches the user's name from Firebase
+     * Fetches the user's name from Firebase and updates both the UI and LoginManager
      */
-    private void fetchUserName() {
-        if (userId != null) {
-            firebaseHelper.getUserData(userId, new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot snapshot) {
-                    if (snapshot.exists()) {
-                        String name = snapshot.child("name").getValue(String.class);
-                        if (name != null && !name.isEmpty()) {
-                            // Update the greeting with the user's name
-                            Calendar c = Calendar.getInstance();
-                            int timeOfDay = c.get(Calendar.HOUR_OF_DAY);
-                            String greeting;
-                            if (timeOfDay >= 0 && timeOfDay < 12) {
-                                greeting = "Good morning";
-                            } else if (timeOfDay >= 12 && timeOfDay < 16) {
-                                greeting = "Good afternoon";
-                            } else {
-                                greeting = "Good evening";
-                            }
-                            tvGreeting.setText(greeting + ", " + name);
+    private void fetchUserName(String greeting) {
+        firebaseHelper.getUserData(userId, new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    String name = snapshot.child("name").getValue(String.class);
+                    if (name != null && !name.isEmpty()) {
+                        // Update the greeting with the user's actual name from Firebase
+                        tvGreeting.setText(greeting + ", " + name);
 
-                            // Save name to LoginManager for future use
-                            loginManager.saveLoginState(HomeActivity.this, name);
-                        }
+                        // Update LoginManager with the correct name for future use
+                        loginManager.saveLoginState(HomeActivity.this, name);
                     }
                 }
+            }
 
-                @Override
-                public void onCancelled(@NonNull DatabaseError error) {
-                    // Handle error
-                }
-            });
-        }
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                // Handle error - keep the current greeting
+            }
+        });
     }
 
     /**
@@ -399,5 +390,8 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationV
         super.onResume();
         // Refreshes the last check-in info when returning to this screen
         loadLastCheckinInfo();
+
+        // Also refresh the greeting to ensure the name is correct
+        setGreeting();
     }
 }

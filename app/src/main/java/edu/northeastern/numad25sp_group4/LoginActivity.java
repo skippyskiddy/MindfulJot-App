@@ -16,6 +16,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.ValueEventListener;
 
 import utils.FirebaseHelper;
 import utils.LoginManager;
@@ -127,18 +130,17 @@ public class LoginActivity extends AppCompatActivity {
 
                 if (task.isSuccessful()) {
                     // Sign in success
-                    String userName = ""; // We'll get the user name from Firebase database
-
                     // Get the current user from Firebase
                     if (firebaseHelper.getCurrentUser() != null) {
-                        // TODO for now we just use the email as the username until we fetch the actual name
-                        userName = email.substring(0, email.indexOf('@'));
+                        // Create a temporary username from email (just for initial login state)
+                        // This will be replaced with the actual name from Firebase
+                        String tempUserName = email.substring(0, email.indexOf('@'));
 
-                        // Save login state
-                        loginManager.saveLoginState(LoginActivity.this, userName);
+                        // Set a temporary login state with email username
+                        loginManager.saveLoginState(LoginActivity.this, tempUserName);
 
-                        // Check if user has completed tutorial
-                        checkTutorialStatus();
+                        // Fetch the actual user name from Firebase
+                        fetchUserData(firebaseHelper.getCurrentUser().getUid());
                     }
                 } else {
                     // Sign in failed
@@ -151,13 +153,49 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     /**
+     * Fetches the user's actual name from Firebase after login
+     */
+    private void fetchUserData(String userId) {
+        firebaseHelper.getUserData(userId, new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    // Get the actual user name
+                    String name = snapshot.child("name").getValue(String.class);
+                    if (name != null && !name.isEmpty()) {
+                        // Update the login state with the actual name
+                        loginManager.saveLoginState(LoginActivity.this, name);
+                    }
+
+                    // Check if user has completed tutorial
+                    Boolean completedTutorial = snapshot.child("completedTutorial").getValue(Boolean.class);
+                    if (completedTutorial != null && completedTutorial) {
+                        navigateToHome();
+                    } else {
+                        navigateToTutorial();
+                    }
+                } else {
+                    // User data doesn't exist, navigate to home anyway
+                    navigateToHome();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                // Database error, just navigate to home
+                navigateToHome();
+            }
+        });
+    }
+
+    /**
      * Checks if the user has completed the tutorial to determine where to navigate
      */
     private void checkTutorialStatus() {
         // TODO for now we just navigate to HomeActivity directly
         // In a complete implementation, we'd check if the user has completed the tutorial
+        // every time.
 
-        // You can implement this check by querying Firebase for the user's completedTutorial flag
         navigateToHome();
     }
 
@@ -175,11 +213,9 @@ public class LoginActivity extends AppCompatActivity {
      * Navigates to the welcome/tutorial screen
      */
     private void navigateToTutorial() {
-        //TODO
-        //Intent intent = new Intent(LoginActivity.this, WelcomeActivity.class);
-        //intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        //startActivity(intent);
+        Intent intent = new Intent(LoginActivity.this, WelcomeActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
         finish();
     }
-
 }
