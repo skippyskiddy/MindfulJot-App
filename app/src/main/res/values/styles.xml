@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Add this to your existing styles -->
+    <style name="DarkCalendarTheme" parent="Theme.AppCompat.NoActionBar">
+        <!-- Default colors -->
+        <item name="colorPrimary">@color/background_dark</item>
+        <item name="colorPrimaryDark">@color/background_dark</item>
+        <item name="colorAccent">@color/accent</item>
+
+        <!-- Calendar specific attributes -->
+        <item name="android:background">@color/card_background</item>
+
+        <!-- These attributes are library-specific and need to be declared in your attrs.xml -->
+    </style>
+</resources>
