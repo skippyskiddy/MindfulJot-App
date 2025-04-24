@@ -5,12 +5,12 @@ import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.util.Patterns;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -37,6 +37,7 @@ public class EditProfileActivity extends AppCompatActivity {
     private static final String TAG = "EditProfileActivity";
 
     private ImageButton btnBack;
+    private TextView tvEmailLabel; // Added for email field label
     private EditText etEmail, etUsername, etPassword, etConfirmPassword, etName;
     private ImageView ivPasswordMatch;
     private Button btnSaveChanges;
@@ -80,6 +81,7 @@ public class EditProfileActivity extends AppCompatActivity {
 
     private void initViews() {
         btnBack = findViewById(R.id.btn_back);
+        tvEmailLabel = findViewById(R.id.tv_email_label); // Get reference to email label
         etEmail = findViewById(R.id.et_email);
         etUsername = findViewById(R.id.et_username);
         etPassword = findViewById(R.id.et_password);
@@ -87,6 +89,15 @@ public class EditProfileActivity extends AppCompatActivity {
         etName = findViewById(R.id.et_name);
         ivPasswordMatch = findViewById(R.id.iv_password_match);
         btnSaveChanges = findViewById(R.id.btn_save_changes);
+
+        // Disable email field and style it to show it's not editable
+        etEmail.setEnabled(false);
+        etEmail.setAlpha(0.7f);
+
+        // Add indicator text to the email label
+        if (tvEmailLabel != null) {
+            tvEmailLabel.setText("Email (cannot be changed)");
+        }
     }
 
     private void loadUserData() {
@@ -111,8 +122,9 @@ public class EditProfileActivity extends AppCompatActivity {
                     etUsername.setText(currentUsername);
                     etName.setText(currentName);
 
-                    // Enable fields after data is loaded
+                    // Enable fields after data is loaded (except email)
                     setFieldsEnabled(true);
+                    etEmail.setEnabled(false); // Keep email disabled
                 } else {
                     Log.e(TAG, "User data snapshot doesn't exist");
                     Toast.makeText(EditProfileActivity.this, "Failed to load user data", Toast.LENGTH_SHORT).show();
@@ -130,7 +142,10 @@ public class EditProfileActivity extends AppCompatActivity {
     }
 
     private void setFieldsEnabled(boolean enabled) {
-        etEmail.setEnabled(enabled);
+        // Always keep email disabled
+        etEmail.setEnabled(false);
+
+        // Enable/disable other fields
         etUsername.setEnabled(enabled);
         etPassword.setEnabled(enabled);
         etConfirmPassword.setEnabled(enabled);
@@ -198,14 +213,13 @@ public class EditProfileActivity extends AppCompatActivity {
      */
     private void validateAndSaveChanges() {
         // Reset errors
-        etEmail.setError(null);
         etUsername.setError(null);
         etPassword.setError(null);
         etConfirmPassword.setError(null);
         etName.setError(null);
 
         // Get values
-        String email = etEmail.getText().toString().trim();
+        // Note: We don't process the email anymore
         String username = etUsername.getText().toString().trim();
         String password = etPassword.getText().toString();
         String confirmPassword = etConfirmPassword.getText().toString();
@@ -250,17 +264,6 @@ public class EditProfileActivity extends AppCompatActivity {
             cancel = true;
         }
 
-        // Check email
-        if (TextUtils.isEmpty(email)) {
-            etEmail.setError("Email is required");
-            focusView = etEmail;
-            cancel = true;
-        } else if (!isEmailValid(email)) {
-            etEmail.setError("Invalid email format");
-            focusView = etEmail;
-            cancel = true;
-        }
-
         if (cancel) {
             // There was an error; focus the first form field with an error
             if (focusView != null) {
@@ -270,8 +273,8 @@ public class EditProfileActivity extends AppCompatActivity {
             // Show progress (could add a progress bar)
             setFieldsEnabled(false);
 
-            // Save changes
-            saveChanges(email, username, password, name);
+            // Save changes - passing current email to avoid any changes
+            saveChanges(currentEmail, username, password, name);
         }
     }
 
@@ -280,17 +283,12 @@ public class EditProfileActivity extends AppCompatActivity {
      */
     private void saveChanges(final String email, final String username, final String password, final String name) {
         // Debug logging
-        Log.d(TAG, "Saving changes - Email: " + email + ", Username: " + username + ", Name: " + name);
+        Log.d(TAG, "Saving changes - Username: " + username + ", Name: " + name);
 
         // Create updates map for database
         final Map<String, Object> updates = new HashMap<>();
         updates.put("name", name);
         updates.put("username", username);
-
-        // Only update email in database if it's changed
-        if (!email.equals(currentEmail)) {
-            updates.put("email", email);
-        }
 
         // First update the user's profile in the database
         firebaseHelper.updateUserData(userId, updates)
@@ -302,10 +300,8 @@ public class EditProfileActivity extends AppCompatActivity {
                         // Also update the login manager's stored username
                         loginManager.saveLoginState(EditProfileActivity.this, name);
 
-                        // Update Firebase Auth if email has changed
-                        if (!email.equals(currentEmail)) {
-                            updateEmail(email);
-                        } else if (!TextUtils.isEmpty(password)) {
+                        // Note: We never update email anymore, only password if provided
+                        if (!TextUtils.isEmpty(password)) {
                             // Update password if provided
                             updatePassword(password);
                         } else {
@@ -324,40 +320,6 @@ public class EditProfileActivity extends AppCompatActivity {
                         setFieldsEnabled(true);
                     }
                 });
-    }
-
-    /**
-     * Updates the user's email in Firebase Auth
-     */
-    private void updateEmail(final String newEmail) {
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user != null) {
-            user.updateEmail(newEmail)
-                    .addOnCompleteListener(new OnCompleteListener<Void>() {
-                        @Override
-                        public void onComplete(@NonNull Task<Void> task) {
-                            if (task.isSuccessful()) {
-                                Log.d(TAG, "Email update successful");
-
-                                // Check if password also needs to be updated
-                                if (!TextUtils.isEmpty(etPassword.getText().toString())) {
-                                    updatePassword(etPassword.getText().toString());
-                                } else {
-                                    showSuccess();
-                                }
-                            } else {
-                                // Email update failed, might need re-authentication
-                                Log.e(TAG, "Email update failed: " +
-                                        (task.getException() != null ? task.getException().getMessage() : "Unknown error"));
-
-                                Toast.makeText(EditProfileActivity.this,
-                                        "Failed to update email. You may need to re-login.",
-                                        Toast.LENGTH_SHORT).show();
-                                setFieldsEnabled(true);
-                            }
-                        }
-                    });
-        }
     }
 
     /**
@@ -395,7 +357,7 @@ public class EditProfileActivity extends AppCompatActivity {
         // Update current values to reflect changes
         currentName = etName.getText().toString().trim();
         currentUsername = etUsername.getText().toString().trim();
-        currentEmail = etEmail.getText().toString().trim();
+        // Email remains unchanged
 
         Toast.makeText(this, "Profile updated successfully", Toast.LENGTH_SHORT).show();
 
@@ -441,10 +403,6 @@ public class EditProfileActivity extends AppCompatActivity {
     /**
      * Validation helper methods
      */
-    private boolean isEmailValid(String email) {
-        return Patterns.EMAIL_ADDRESS.matcher(email).matches();
-    }
-
     private boolean isUsernameValid(String username) {
         // Username can only contain letters, numbers, and underscores
         return username.matches("^[a-zA-Z0-9_]+$");

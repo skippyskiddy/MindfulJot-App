@@ -39,10 +39,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import android.content.DialogInterface;
+import android.graphics.Color;
+import android.widget.Button;
+import androidx.core.content.ContextCompat;
+
 
 import adapters.EntryImageAdapter;
 import models.Emotion;
@@ -162,6 +166,25 @@ public class EntryEditActivity extends AppCompatActivity implements EntryImageAd
         InputFilter[] filters = new InputFilter[1];
         filters[0] = new InputFilter.LengthFilter(MAX_CHAR_COUNT);
         etJournalText.setFilters(filters);
+    }
+
+    /**
+     * Helper method to update the tag input state based on the current number of tags
+     */
+    private void updateTagInputState() {
+        if (tags.size() >= MAX_TAGS) {
+            // Disable input when at or above max tags
+            etTags.setEnabled(false);
+            etTags.setHint("Maximum tags reached");
+        } else if (tags.isEmpty()) {
+            // Default state for no tags
+            etTags.setEnabled(true);
+            etTags.setHint("Type tag + space or enter");
+        } else {
+            // State for some tags but below max
+            etTags.setEnabled(true);
+            etTags.setHint("+ Add more tags");
+        }
     }
 
     private void setupAdapters() {
@@ -322,6 +345,10 @@ public class EntryEditActivity extends AppCompatActivity implements EntryImageAd
         llTagsDisplay.removeAllViews();
         llTags.removeAllViews(); // Clear edit mode tags too
 
+        // Debug log to check what tags are being loaded
+        Log.d(TAG, "Loading tags from entry: " +
+                (currentEntry.getTags() != null ? currentEntry.getTags().toString() : "null"));
+
         if (currentEntry.getTags() != null && !currentEntry.getTags().isEmpty()) {
             // Make a deep copy of the tags to avoid reference issues
             List<String> entryTags = new ArrayList<>(currentEntry.getTags());
@@ -403,6 +430,7 @@ public class EntryEditActivity extends AppCompatActivity implements EntryImageAd
         // Update the adapter to show/hide delete buttons
         if (imageAdapter != null) {
             imageAdapter.setEditMode(enable);
+            imageAdapter.notifyDataSetChanged();
         }
         // Toggle character count visibility
         tvCharCount.setVisibility(enable ? View.VISIBLE : View.GONE);
@@ -440,7 +468,7 @@ public class EntryEditActivity extends AppCompatActivity implements EntryImageAd
         boolean hasImages = imageUris != null && !imageUris.isEmpty();
         recyclerImages.setVisibility(hasImages ? View.VISIBLE : View.GONE);
         tvNoImages.setVisibility(hasImages ? View.GONE : View.VISIBLE);
-        tvImageCount.setVisibility(hasImages ? View.VISIBLE : View.GONE);
+        tvImageCount.setVisibility(hasImages && enable ? View.VISIBLE : View.GONE);
 
         if (hasImages) {
             tvImageCount.setText(imageUris.size() +
@@ -450,6 +478,9 @@ public class EntryEditActivity extends AppCompatActivity implements EntryImageAd
         // Update visibility of no tags/images messages
         updateNoTagsVisibility();
         updateNoImagesVisibility();
+
+        // Update tag input state
+        updateTagInputState();
     }
 
 
@@ -540,6 +571,9 @@ public class EntryEditActivity extends AppCompatActivity implements EntryImageAd
         } else if (tags.size() >= MAX_TAGS) {
             Toast.makeText(this, "Maximum " + MAX_TAGS + " tags allowed", Toast.LENGTH_SHORT).show();
         }
+
+        // Update tag input state based on current count
+        updateTagInputState();
     }
 
     private void addTagView(String tagText) {
@@ -561,13 +595,8 @@ public class EntryEditActivity extends AppCompatActivity implements EntryImageAd
                 ((LinearLayout) tagView.getParent()).removeView(tagView);
             }
 
-            // Make sure the tag input is enabled if we're below the limit
-            etTags.setEnabled(true);
-
-            // Ensure hint is visible for better clarity
-            if (tags.isEmpty()) {
-                etTags.setHint("Type tag + space or enter");
-            }
+            // Update the tag input state based on current number of tags
+            updateTagInputState();
         });
 
         // Add layout parameters
@@ -580,14 +609,8 @@ public class EntryEditActivity extends AppCompatActivity implements EntryImageAd
         // Add the tag to the horizontal LinearLayout in the scroll view
         llTags.addView(tagView);
 
-        // Disable the input if we've reached the limit
-        if (tags.size() >= MAX_TAGS) {
-            etTags.setEnabled(false);
-            etTags.setHint("Maximum tags reached");
-        } else {
-            // Change hint to be clearer once user has added at least one tag
-            etTags.setHint("+ Add more tags");
-        }
+        // Update input field state based on current number of tags
+        updateTagInputState();
 
         // Scroll to the end of the tags
         tagsScrollView.post(() -> tagsScrollView.fullScroll(HorizontalScrollView.FOCUS_RIGHT));
@@ -626,12 +649,16 @@ public class EntryEditActivity extends AppCompatActivity implements EntryImageAd
         setViewsEnabled(false);
         btnDoneEditing.setEnabled(false);
 
+        // Debug log to check tags before saving
+        Log.d(TAG, "Tags before saving: " + tags.toString());
+
         // Update entry with edited data
         currentEntry.setJournalText(etJournalText.getText().toString().trim());
 
-        // Save tags with logging
-        Log.d(TAG, "Saving tags: " + tags.size() + " - " + tags.toString());
-        currentEntry.setTags(new ArrayList<>(tags));
+        // Create a new ArrayList with the current tags and set it on the entry
+        ArrayList<String> updatedTags = new ArrayList<>(tags);
+        Log.d(TAG, "Saving updated tags: " + updatedTags.size() + " - " + updatedTags.toString());
+        currentEntry.setTags(updatedTags);
 
         // Check if we need to handle image uploads
         if (!imageBytesList.isEmpty()) {
@@ -718,11 +745,19 @@ public class EntryEditActivity extends AppCompatActivity implements EntryImageAd
     }
 
     private void saveEntryToFirebase() {
+        // Debug logging before save
+        Log.d(TAG, "About to save entry with ID: " + currentEntry.getEntryId());
+        Log.d(TAG, "Tags before save to Firebase: " +
+                (currentEntry.getTags() != null ? currentEntry.getTags().toString() : "null"));
+
         // Save the updated entry to Firebase
         firebaseHelper.saveEmotionEntry(currentEntry)
                 .addOnSuccessListener(aVoid -> {
-                    // Update UI with current entry data without waiting for Firebase refresh
-                    Log.d(TAG, "Entry saved successfully. Tags count: " +
+                    // Debug logs after successful save
+                    Log.d(TAG, "Entry saved successfully to Firebase with ID: " + currentEntry.getEntryId());
+                    Log.d(TAG, "Tags after save: " +
+                            (currentEntry.getTags() != null ? currentEntry.getTags().toString() : "null"));
+                    Log.d(TAG, "Tags count: " +
                             (currentEntry.getTags() != null ? currentEntry.getTags().size() : 0));
 
                     Toast.makeText(EntryEditActivity.this, "Entry updated successfully", Toast.LENGTH_SHORT).show();
@@ -819,16 +854,42 @@ public class EntryEditActivity extends AppCompatActivity implements EntryImageAd
     }
 
     private void showUnsavedChangesDialog() {
-        new AlertDialog.Builder(this)
+        AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle("Unsaved Changes")
                 .setMessage("You have unsaved changes. Do you want to save them before leaving?")
-                .setPositiveButton("Save", (dialog, which) -> {
+                .setPositiveButton("Save", (dialogInterface, which) -> {
                     saveChanges();
                     finish();
                 })
-                .setNegativeButton("Discard", (dialog, which) -> finish())
+                .setNegativeButton("Discard", (dialogInterface, which) -> finish())
                 .setNeutralButton("Cancel", null)
-                .show();
+                .create();
+
+        // Ensure dialog text is visible in all themes
+        dialog.setOnShowListener(dialogInterface -> {
+            TextView titleView = dialog.findViewById(android.R.id.title);
+            TextView messageView = dialog.findViewById(android.R.id.message);
+
+            if (titleView != null) {
+                titleView.setTextColor(Color.BLACK);
+            }
+
+            if (messageView != null) {
+                messageView.setTextColor(Color.BLACK);
+            }
+
+            // Get the buttons and set their text colors
+            Button positiveButton = dialog.getButton(DialogInterface.BUTTON_POSITIVE);
+            Button negativeButton = dialog.getButton(DialogInterface.BUTTON_NEGATIVE);
+            Button neutralButton = dialog.getButton(DialogInterface.BUTTON_NEUTRAL);
+
+            // Set button text colors to a visible color
+            if (positiveButton != null) positiveButton.setTextColor(Color.BLUE);
+            if (negativeButton != null) negativeButton.setTextColor(Color.BLUE);
+            if (neutralButton != null) neutralButton.setTextColor(Color.BLUE);
+        });
+
+        dialog.show();
     }
 
     private void setViewsEnabled(boolean enabled) {

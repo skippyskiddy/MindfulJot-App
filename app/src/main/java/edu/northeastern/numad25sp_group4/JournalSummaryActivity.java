@@ -19,7 +19,7 @@ import android.text.style.ForegroundColorSpan;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.animation.AlphaAnimation;
+import android.util.Log;
 import android.view.animation.Animation;
 import android.view.animation.ScaleAnimation;
 import android.view.inputmethod.EditorInfo;
@@ -1110,18 +1110,13 @@ public class JournalSummaryActivity extends AppCompatActivity implements EntryIm
             // Remove the tag from the list
             tags.remove(tagText);
 
-            // Remove the tag view from both possible parent layouts
+            // Remove the tag view from the parent layout
             if (tagView.getParent() != null) {
                 ((LinearLayout) tagView.getParent()).removeView(tagView);
             }
 
-            // Make sure the tag input is enabled if we're below the limit
-            etTags.setEnabled(true);
-
-            // Ensure hint is visible for better clarity
-            if (tags.isEmpty()) {
-                etTags.setHint("Type tag + space or enter");
-            }
+            // Update the tag input state based on current number of tags
+            updateTagInputState();
         });
 
         // Add layout parameters
@@ -1134,17 +1129,30 @@ public class JournalSummaryActivity extends AppCompatActivity implements EntryIm
         // Add the tag to the horizontal LinearLayout in the scroll view
         llTags.addView(tagView);
 
-        // Disable the input if we've reached the limit
-        if (tags.size() >= MAX_TAGS) {
-            etTags.setEnabled(false);
-            etTags.setHint("Maximum tags reached");
-        } else {
-            // Change hint to be clearer once user has added at least one tag
-            etTags.setHint("+ Add more tags");
-        }
+        // Update input field state based on current number of tags
+        updateTagInputState();
 
         // Scroll to the end of the tags
         tagsScrollView.post(() -> tagsScrollView.fullScroll(HorizontalScrollView.FOCUS_RIGHT));
+    }
+
+    /**
+     * Helper method to update the tag input state based on the current number of tags
+     */
+    private void updateTagInputState() {
+        if (tags.size() >= MAX_TAGS) {
+            // Disable input when at or above max tags
+            etTags.setEnabled(false);
+            etTags.setHint("Maximum tags reached");
+        } else if (tags.isEmpty()) {
+            // Default state for no tags
+            etTags.setEnabled(true);
+            etTags.setHint("Type tag + space or enter");
+        } else {
+            // State for some tags but below max
+            etTags.setEnabled(true);
+            etTags.setHint("+ Add more tags");
+        }
     }
 
     private void saveEntry() {

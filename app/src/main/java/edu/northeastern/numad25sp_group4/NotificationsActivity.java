@@ -108,10 +108,6 @@ public class NotificationsActivity extends AppCompatActivity {
         ivNoCheck.setVisibility(View.INVISIBLE);
         ivNextArrow.setAlpha(0.5f);
         ivNextArrow.setEnabled(false);
-
-        // Set "None" as the default selected option
-        selectedPreference = "none";
-        updateCardSelection(cardNoReminders, ivNoCheck);
     }
 
     private void setupListeners() {

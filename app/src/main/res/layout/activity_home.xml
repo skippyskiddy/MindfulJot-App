@@ -106,7 +106,7 @@
                 android:id="@+id/tv_last_checkin"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="You last checked in on March 7, 2024. Your last logged emotion was Anger"
+                android:text="Loading your emotion data..."
                 android:textColor="@color/white"
                 android:textSize="16sp"
                 android:gravity="center"

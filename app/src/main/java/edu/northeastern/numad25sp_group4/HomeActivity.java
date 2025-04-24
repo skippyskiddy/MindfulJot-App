@@ -255,26 +255,43 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationV
      */
     private void loadLastCheckinInfo() {
         if (userId != null) {
-            firebaseHelper.getLatestEmotionEntry(userId, new ValueEventListener() {
+            // Show loading state
+            tvLastCheckin.setText("Loading your emotion history...");
+
+            // Get all entries for the user and find the latest one by timestamp
+            firebaseHelper.getAllEntries(userId, new FirebaseHelper.FilteredEntriesListener() {
                 @Override
-                public void onDataChange(@NonNull DataSnapshot snapshot) {
-                    if (snapshot.exists() && snapshot.getChildrenCount() > 0) {
-                        // There's at least one entry
-                        for (DataSnapshot entrySnapshot : snapshot.getChildren()) {
-                            EmotionEntry entry = entrySnapshot.getValue(EmotionEntry.class);
-                            if (entry != null && entry.getTimestamp() != null) {
-                                displayLastCheckinInfo(entry);
-                                return;
+                public void onSuccess(List<EmotionEntry> entries) {
+                    if (entries.isEmpty()) {
+                        // No entries yet
+                        tvLastCheckin.setText("No entries - log how you feel with the check in button");
+                        return;
+                    }
+
+                    // Find the latest entry by timestamp
+                    EmotionEntry latestEntry = null;
+                    Date latestTimestamp = null;
+
+                    for (EmotionEntry entry : entries) {
+                        if (entry.getTimestamp() != null) {
+                            if (latestTimestamp == null || entry.getTimestamp().after(latestTimestamp)) {
+                                latestTimestamp = entry.getTimestamp();
+                                latestEntry = entry;
                             }
                         }
+                    }
+
+                    if (latestEntry != null) {
+                        // Display the latest entry
+                        displayLastCheckinInfo(latestEntry);
                     } else {
-                        // No entries yet
+                        // No valid entries found
                         tvLastCheckin.setText("No entries - log how you feel with the check in button");
                     }
                 }
 
                 @Override
-                public void onCancelled(@NonNull DatabaseError error) {
+                public void onFailure(DatabaseError error) {
                     // Handle error
                     tvLastCheckin.setText("No entries - log how you feel with the check in button");
                 }
